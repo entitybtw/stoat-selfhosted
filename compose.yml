@@ -3,12 +3,12 @@ name: stoat
 services:
   # MongoDB: Database
   database:
-    image: docker.io/mongo
+    image: docker.io/mongo:4.4
     restart: always
     volumes:
       - ./data/db:/data/db
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
       interval: 10s
       timeout: 10s
       retries: 5
@@ -37,7 +37,7 @@ services:
 
   # MinIO: S3-compatible storage server
   minio:
-    image: docker.io/pgsty/silo
+    image: docker.io/minio/minio
     command: server /data
     volumes:
       - ./data/minio:/data
@@ -78,7 +78,7 @@ services:
 
   # API server
   api:
-    image: ghcr.io/stoatchat/api:v0.15.5
+    image: entbtw/stoat:v0.0.1-api
     env_file: secrets.env
     depends_on:
       database:
@@ -93,9 +93,10 @@ services:
         target: /Revolt.toml
     restart: always
 
+
   # Events service
   events:
-    image: ghcr.io/stoatchat/events:v0.15.5
+    image: entbtw/stoat:v0.0.1-events
     env_file: secrets.env
     depends_on:
       database:
@@ -110,7 +111,7 @@ services:
 
   # File server
   autumn:
-    image: ghcr.io/stoatchat/file-server:v0.15.5
+    image: entbtw/stoat:v0.0.1-file-server
     env_file: secrets.env
     depends_on:
       database:
@@ -125,7 +126,7 @@ services:
 
   # Metadata and image proxy
   january:
-    image: ghcr.io/stoatchat/proxy:v0.15.5
+    image: entbtw/stoat:v0.0.1-proxy
     env_file: secrets.env
     volumes:
       - type: bind
@@ -135,7 +136,7 @@ services:
 
   # Tenor proxy
   gifbox:
-    image: ghcr.io/stoatchat/gifbox:v0.15.5
+    image: entbtw/stoat:v0.0.1-gifbox
     env_file: secrets.env
     volumes:
       - type: bind
@@ -145,7 +146,7 @@ services:
 
   # Regular task daemon
   crond:
-    image: ghcr.io/stoatchat/crond:v0.15.5
+    image: entbtw/stoat:v0.0.1-crond
     env_file: secrets.env
     depends_on:
       database:
@@ -160,7 +161,7 @@ services:
 
   # Push notification daemon
   pushd:
-    image: ghcr.io/stoatchat/pushd:v0.15.5
+    image: entbtw/stoat:v0.0.1-pushd
     env_file: secrets.env
     depends_on:
       database:
@@ -175,9 +176,9 @@ services:
         target: /Revolt.toml
     restart: always
 
-   # Voice ingress daemon
+  # Voice ingress daemon
   voice-ingress:
-    image: ghcr.io/stoatchat/voice-ingress:v0.15.5
+    image: entbtw/stoat:v0.0.1-voice-ingress
     env_file: secrets.env
     restart: always
     depends_on:
@@ -190,8 +191,9 @@ services:
         source: ./Revolt.toml
         target: /Revolt.toml
 
+  # LiveKit SFU (mirrored from ghcr.io/stoatchat/livekit-server:v1.9.13)
   livekit:
-    image: ghcr.io/stoatchat/livekit-server:v1.9.14
+    image: entbtw/stoat:v0.0.1-livekit
     depends_on:
       redis:
         condition: service_started
@@ -207,14 +209,14 @@ services:
 
   # Create buckets for minio.
   createbuckets:
-    image: docker.io/pgsty/mc
+    image: docker.io/minio/mc
     depends_on:
       - minio
     entrypoint: >
       /bin/sh -c "
       while ! /usr/bin/mc ready minio; do
-        /usr/bin/mc alias set minio http://minio:9000 minioautumn minioautumn;
-        echo 'Waiting minio...' && sleep 1;
+      /usr/bin/mc alias set minio http://minio:9000 minioautumn minioautumn;
+      echo 'Waiting minio...' && sleep 1;
       done;
       /usr/bin/mc mb minio/revolt-uploads;
       exit 0;
@@ -222,7 +224,7 @@ services:
 
   # Web App
   web:
-    # for-web v0.15.3
-    image: ghcr.io/stoatchat/for-web:4017c18
+    # for-web fork: voice resilience, adaptive video, soundboard, i18n fixes
+    image: entbtw/stoat:latest
     restart: always
     env_file: .env.web

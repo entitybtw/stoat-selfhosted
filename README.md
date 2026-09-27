@@ -1,17 +1,68 @@
 <div align="center">
-<h1>
-  Stoat Self-Hosted
-  
-  [![Stars](https://img.shields.io/github/stars/stoatchat/self-hosted?style=flat-square&logoColor=white)](https://github.com/stoatchat/self-hosted/stargazers)
-  [![Forks](https://img.shields.io/github/forks/stoatchat/self-hosted?style=flat-square&logoColor=white)](https://github.com/stoatchat/self-hosted/network/members)
-  [![Pull Requests](https://img.shields.io/github/issues-pr/stoatchat/self-hosted?style=flat-square&logoColor=white)](https://github.com/stoatchat/self-hosted/pulls)
-  [![Issues](https://img.shields.io/github/issues/stoatchat/self-hosted?style=flat-square&logoColor=white)](https://github.com/stoatchat/self-hosted/issues)
-  [![Contributors](https://img.shields.io/github/contributors/stoatchat/self-hosted?style=flat-square&logoColor=white)](https://github.com/stoatchat/self-hosted/graphs/contributors)
-  [![License](https://img.shields.io/github/license/stoatchat/self-hosted?style=flat-square&logoColor=white)](https://github.com/stoatchat/self-hosted/blob/main/LICENSE)
-</h1>
+<h1>Stoat Self-Hosted &mdash; fork</h1>
 Self-hosting Stoat using Docker
 </div>
 <br/>
+
+> [!NOTE]
+> This is a fork of
+> [stoatchat/self-hosted](https://github.com/stoatchat/self-hosted)
+> maintained at `https://git.entitybtw.ru/entitybtw/stoat-selfhosted`.
+> Every application image referenced by `compose.yml` is published by this fork
+> under [`entbtw/stoat`](https://hub.docker.com/r/entbtw/stoat) on Docker Hub
+> instead of `ghcr.io/stoatchat/*`, so an instance keeps pulling images even if
+> the upstream registry goes away.
+
+## What this fork adds
+
+**Voice & video**
+
+- The voice connection recovers on its own: LiveKit node probing with a hard
+  timeout, exponential-backoff rejoin with fresh tokens, and listeners for
+  `reconnecting`/`reconnected` so the UI no longer sits on "Connecting…" forever.
+- The inline call card reserves its own height in the chat column instead of
+  being painted over the messages, and the navigation rail sizes itself to
+  translated labels instead of clipping them.
+- Video adapts to the link: `adaptiveStream` + `dynacast`, a three-rung simulcast
+  ladder for every screen share quality, `contentHint: detail` for 720p/1080p
+  sharing, and a camera capture sized from `limits().video_resolution` — which
+  also stops the client publishing something `voice-ingress` kicks you for.
+- A **Soundboard** in the call card: mp3, wav, ogg, opus, flac, m4a, aac, webm,
+  aiff — anything the browser can decode is accepted (files are decoded once
+  before upload so a broken format is rejected with a message rather than
+  silently uploaded). Clips are announced over LiveKit's data channel and played
+  back by every participant locally, so deafen, per-user volume and the
+  soundboard volume all apply per listener. The library lives in the synced
+  settings store, so it follows your account between devices.
+
+**Interface & localisation**
+
+- Long text truncates instead of pushing controls out of clipped containers
+  (channel headers, profile cards, settings sidebar).
+- Roughly thirty labels that were hardcoded English — friend profile actions,
+  profile section titles, pinned/search sidebars, several settings entries, the
+  composer pickers, the desktop titlebar, the account-deletion flow and three
+  modals — are now in the translation catalogs.
+
+### Images used by `compose.yml`
+
+| Service           | Image                              |
+| ----------------- | ---------------------------------- |
+| `web`             | `entbtw/stoat:latest`              |
+| `api`             | `entbtw/stoat:v0.0.1-api`          |
+| `events`          | `entbtw/stoat:v0.0.1-events`       |
+| `autumn`          | `entbtw/stoat:v0.0.1-file-server`  |
+| `january`         | `entbtw/stoat:v0.0.1-proxy`        |
+| `gifbox`          | `entbtw/stoat:v0.0.1-gifbox`       |
+| `crond`           | `entbtw/stoat:v0.0.1-crond`        |
+| `pushd`           | `entbtw/stoat:v0.0.1-pushd`        |
+| `voice-ingress`   | `entbtw/stoat:v0.0.1-voice-ingress`|
+| `livekit`         | `entbtw/stoat:v0.0.1-livekit`      |
+
+The backend images are built from `v0.15.5`, the web image from the `for-web`
+fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.
+Infrastructure images (MongoDB, Valkey, RabbitMQ, MinIO, Caddy) are still pulled
+straight from their upstream registries.
 
 This repository contains configurations and instructions that can be used for deploying a full instance of Stoat, including the back-end, web front-end, file server, and metadata and image proxy.
 
@@ -166,7 +217,7 @@ apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docke
 Now, we can pull in the configuration for Stoat:
 
 ```bash
-git clone https://github.com/stoatchat/self-hosted stoat
+git clone https://git.entitybtw.ru/entitybtw/stoat-selfhosted stoat
 cd stoat
 ```
 
@@ -288,7 +339,12 @@ Livekit requires ports 7881/tcp and 50000-50100/udp to be openly accessible on t
 
 ### Getting kicked on video enabled instances when turning on video
 
-Due to an incomplete implementation, Stoat will kick any user that attempts to stream a video that is larger than the maximum size defined in `Revolt.toml`. If you would like to increase the maximum size allowed on your Stoat instance, you can do so by modifying the `video_resolution` field under `[features.limits.new_user]` and `[features.limits.default]` to a larger value in your `Revolt.toml`. For example, 4k would be : `[3996, 2160]`.
+The server kicks any user who publishes a video track larger than the maximum size defined in `Revolt.toml`. If you would like to increase the maximum size allowed on your Stoat instance, you can do so by modifying the `video_resolution` field under `[features.limits.new_user]` and `[features.limits.default]` to a larger value in your `Revolt.toml`. For example, 4k would be : `[3996, 2160]`.
+
+The web client in this fork reads that limit and sizes its camera capture to fit
+it, so web users no longer get kicked — a fresh 720p camera on a stock
+`new_user` limit of `[1080, 720]` used to exceed it. Other clients may still be
+affected.
 
 ## Notices
 
