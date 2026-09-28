@@ -41,6 +41,12 @@ Self-hosting Stoat using Docker
   rejected with a message rather than silently uploaded). The library lives in
   the synced settings store, so it follows your account between devices, and
   the picker is translated.
+- A **shared server soundboard**: anybody with `ManageCustomisation` can publish
+  a sound for everybody in the server's voice channels, and a moderator with
+  `MuteMembers` can silence one member's soundboard for everybody on that
+  server. Both are ordinary server fields, so they show up with the server and
+  broadcast to everyone. The picker keeps your library and the server's in
+  separate sections and shares a sound between them in one click.
 
 **Interface & localisation**
 
@@ -68,8 +74,8 @@ Self-hosting Stoat using Docker
 
 `compose.yml` deliberately tracks `latest` and `latest-<component>` so the
 example stays universal — the tags move together whenever a release is pushed.
-The same release is also published under a pinned version (`v0.0.2`,
-`v0.0.2-api`, …, `v0.0.2-web`); swap any `latest-*` tag for its pinned
+The same release is also published under a pinned version (`v0.0.3`,
+`v0.0.3-api`, …, `v0.0.3-web`); swap any `latest-*` tag for its pinned
 counterpart when you want a reproducible deploy.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
