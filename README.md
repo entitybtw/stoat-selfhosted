@@ -27,13 +27,20 @@ Self-hosting Stoat using Docker
   ladder for every screen share quality, `contentHint: detail` for 720p/1080p
   sharing, and a camera capture sized from `limits().video_resolution` — which
   also stops the client publishing something `voice-ingress` kicks you for.
-- A **Soundboard** in the call card: mp3, wav, ogg, opus, flac, m4a, aac, webm,
-  aiff — anything the browser can decode is accepted (files are decoded once
-  before upload so a broken format is rejected with a message rather than
-  silently uploaded). Clips are announced over LiveKit's data channel and played
-  back by every participant locally, so deafen, per-user volume and the
-  soundboard volume all apply per listener. The library lives in the synced
-  settings store, so it follows your account between devices.
+- A **Soundboard** in the call card, built like the emoji picker: a searchable
+  grid of tiles with the sound's icon and name, a preview row that doubles as
+  the toolbar (play, rename, picture, emoji, clear, remove) and a footer with
+  the volume, the master mute and the add button. Every sound can be decorated
+  with an uploaded picture, a unicode emoji or a server emoji, announced over
+  LiveKit's data channel and played back by every participant locally, so
+  deafen, per-user volume and the soundboard volume all apply per listener.
+  Clips can be silenced for everybody, for one user, for one server, or for the
+  whole server by its staff — and whoever starts a clip shows a badge with the
+  icon while it plays. mp3, wav, ogg, opus, flac, m4a, aac, webm and aiff are
+  all accepted (files are decoded once before upload so a broken format is
+  rejected with a message rather than silently uploaded). The library lives in
+  the synced settings store, so it follows your account between devices, and
+  the picker is translated.
 
 **Interface & localisation**
 
@@ -49,20 +56,41 @@ Self-hosting Stoat using Docker
 | Service           | Image                              |
 | ----------------- | ---------------------------------- |
 | `web`             | `entbtw/stoat:latest`              |
-| `api`             | `entbtw/stoat:v0.0.1-api`          |
-| `events`          | `entbtw/stoat:v0.0.1-events`       |
-| `autumn`          | `entbtw/stoat:v0.0.1-file-server`  |
-| `january`         | `entbtw/stoat:v0.0.1-proxy`        |
-| `gifbox`          | `entbtw/stoat:v0.0.1-gifbox`       |
-| `crond`           | `entbtw/stoat:v0.0.1-crond`        |
-| `pushd`           | `entbtw/stoat:v0.0.1-pushd`        |
-| `voice-ingress`   | `entbtw/stoat:v0.0.1-voice-ingress`|
-| `livekit`         | `entbtw/stoat:v0.0.1-livekit`      |
+| `api`             | `entbtw/stoat:latest-api`          |
+| `events`          | `entbtw/stoat:latest-events`       |
+| `autumn`          | `entbtw/stoat:latest-file-server`  |
+| `january`         | `entbtw/stoat:latest-proxy`        |
+| `gifbox`          | `entbtw/stoat:latest-gifbox`       |
+| `crond`           | `entbtw/stoat:latest-crond`        |
+| `pushd`           | `entbtw/stoat:latest-pushd`        |
+| `voice-ingress`   | `entbtw/stoat:latest-voice-ingress`|
+| `livekit`         | `entbtw/stoat:latest-livekit`      |
+
+`compose.yml` deliberately tracks `latest` and `latest-<component>` so the
+example stays universal — the tags move together whenever a release is pushed.
+The same release is also published under a pinned version (`v0.0.2`,
+`v0.0.2-api`, …, `v0.0.2-web`); swap any `latest-*` tag for its pinned
+counterpart when you want a reproducible deploy.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
 fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.
 Infrastructure images (MongoDB, Valkey, RabbitMQ, MinIO, Caddy) are still pulled
 straight from their upstream registries.
+
+## Source branches
+
+Everything this fork ships lives as a branch of this one repository:
+
+| Branch       | Contents                                              |
+| ------------ | ----------------------------------------------------- |
+| `main`       | This deployment repo — `compose.yml`, config, docs    |
+| `for-web`    | The web client fork                                   |
+| `stoatchat`  | The backend fork                                      |
+| `stoat.js`   | The JavaScript SDK fork (a submodule of `for-web`)    |
+
+The original upstreams (`stoatchat/self-hosted`, `stoatchat/for-web`,
+`stoatchat/stoatchat`, `stoatchat/javascript-client-sdk`) are configured as the
+`upstream` remote in each working copy.
 
 This repository contains configurations and instructions that can be used for deploying a full instance of Stoat, including the back-end, web front-end, file server, and metadata and image proxy.
 
