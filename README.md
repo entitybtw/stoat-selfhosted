@@ -47,6 +47,13 @@ Self-hosting Stoat using Docker
   server. Both are ordinary server fields, so they show up with the server and
   broadcast to everyone. The picker keeps your library and the server's in
   separate sections and shares a sound between them in one click.
+- Soundboard volume and mutes apply **while the clip is playing**, not just to
+  the next one: the playback pass re-runs whenever a clip starts, so the
+  master volume, deafen and the per-user and per-server soundboard mutes land
+  on the clip that is already running. A clip started under a mute stays
+  paused - shown as paused in the picker - until the mute is lifted, the
+  volume slider keeps the full 0-200% it displays, and a user volume set to
+  0 stays silence instead of falling back to 100%.
 
 **Interface & localisation**
 
@@ -74,8 +81,8 @@ Self-hosting Stoat using Docker
 
 `compose.yml` deliberately tracks `latest` and `latest-<component>` so the
 example stays universal — the tags move together whenever a release is pushed.
-The same release is also published under a pinned version (`v0.0.3`,
-`v0.0.3-api`, …, `v0.0.3-web`); swap any `latest-*` tag for its pinned
+The same release is also published under a pinned version (`v0.0.4`,
+`v0.0.4-api`, …, `v0.0.4-web`); swap any `latest-*` tag for its pinned
 counterpart when you want a reproducible deploy.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
