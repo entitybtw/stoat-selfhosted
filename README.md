@@ -54,6 +54,9 @@ Self-hosting Stoat using Docker
   paused - shown as paused in the picker - until the mute is lifted, the
   volume slider keeps the full 0-200% it displays, and a user volume set to
   0 stays silence instead of falling back to 100%.
+- A scrub keeps the clip on its feet: the timeline remembers which sound it
+  belongs to, so pausing, moving the playhead and pressing play resumes from
+  the new spot instead of restarting from the beginning.
 
 **Interface & localisation**
 
@@ -81,8 +84,8 @@ Self-hosting Stoat using Docker
 
 `compose.yml` deliberately tracks `latest` and `latest-<component>` so the
 example stays universal — the tags move together whenever a release is pushed.
-The same release is also published under a pinned version (`v0.0.4`,
-`v0.0.4-api`, …, `v0.0.4-web`); swap any `latest-*` tag for its pinned
+The same release is also published under a pinned version (`v0.0.5`,
+`v0.0.5-api`, …, `v0.0.5-web`); swap any `latest-*` tag for its pinned
 counterpart when you want a reproducible deploy.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
