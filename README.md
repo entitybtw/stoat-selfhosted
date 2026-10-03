@@ -60,6 +60,15 @@ Self-hosting Stoat using Docker
 
 **Interface & localisation**
 
+- Russian is complete: every message in the `ru` catalog is translated, and
+  twenty-four labels that were still hardcoded English — the search
+  placeholders, the friends-list section headings, dialog titles and their
+  action buttons, sidebar tooltips and assorted aria-labels — are now in the
+  catalogs like everything else. Three catalogs (`sq`, `sv`, `nb-NO`) carried
+  plural syntax no compiler would accept, so those messages silently never
+  compiled; they are fixed.
+- The screenshare button reads its own state: it offers "share" before you
+  share and "stop sharing" while you are, instead of the other way around.
 - Long text truncates instead of pushing controls out of clipped containers
   (channel headers, profile cards, settings sidebar).
 - Roughly thirty labels that were hardcoded English — friend profile actions,
@@ -84,8 +93,8 @@ Self-hosting Stoat using Docker
 
 `compose.yml` deliberately tracks `latest` and `latest-<component>` so the
 example stays universal — the tags move together whenever a release is pushed.
-The same release is also published under a pinned version (`v0.0.5`,
-`v0.0.5-api`, …, `v0.0.5-web`); swap any `latest-*` tag for its pinned
+The same release is also published under a pinned version (`v0.0.6`,
+`v0.0.6-api`, …, `v0.0.6-web`); swap any `latest-*` tag for its pinned
 counterpart when you want a reproducible deploy.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
