@@ -72,6 +72,10 @@ Self-hosting Stoat using Docker
 - The soundboard's footer stops overrunning the menu: the volume row wraps
   onto a second line when the server button would push it past the fixed
   width, instead of running into the border.
+- A sound pressed while the call is still joining plays locally and waits
+  its turn to reach the others: announcing into a half-open connection used
+  to start a negotiation in the middle of the join, which could drop the
+  call before it finished connecting.
 - Long text truncates instead of pushing controls out of clipped containers
   (channel headers, profile cards, settings sidebar).
 - Roughly thirty labels that were hardcoded English — friend profile actions,
@@ -96,8 +100,8 @@ Self-hosting Stoat using Docker
 
 `compose.yml` deliberately tracks `latest` and `latest-<component>` so the
 example stays universal — the tags move together whenever a release is pushed.
-The same release is also published under a pinned version (`v0.0.7`,
-`v0.0.7-api`, …, `v0.0.7-web`); swap any `latest-*` tag for its pinned
+The same release is also published under a pinned version (`v0.0.8`,
+`v0.0.8-api`, …, `v0.0.8-web`); swap any `latest-*` tag for its pinned
 counterpart when you want a reproducible deploy.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
