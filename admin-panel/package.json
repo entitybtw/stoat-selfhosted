@@ -1,0 +1,20 @@
+{
+  "name": "stoat-admin",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Stoat admin panel — standalone user/server management UI",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.2.1",
+    "express": "^4.21.2",
+    "ioredis": "^5.4.2",
+    "mongodb": "^6.13.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

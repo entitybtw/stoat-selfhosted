@@ -63,6 +63,9 @@ services:
     image: docker.io/caddy
     restart: always
     env_file: .env.web
+    environment:
+      # mount path of the admin panel (edit here or set in .env)
+      ADMIN_PANEL_PATH: ${ADMIN_PANEL_PATH:-/admin-panel}
     ports:
       - "80:80"
       - "443:443"
@@ -228,3 +231,18 @@ services:
     image: entbtw/stoat:latest
     restart: always
     env_file: .env.web
+
+  # Admin Panel: standalone user/server management UI (entbtw/stoat-admin)
+  # Served by Caddy at ${ADMIN_PANEL_PATH:-/admin-panel}, talks to MongoDB directly.
+  admin-panel:
+    image: entbtw/stoat-admin:latest
+    restart: always
+    environment:
+      ADMIN_PANEL_PATH: ${ADMIN_PANEL_PATH:-/admin-panel}
+      MONGODB_URI: mongodb://database:27017
+      REDIS_URI: redis://redis:6379
+    depends_on:
+      database:
+        condition: service_started
+      redis:
+        condition: service_started

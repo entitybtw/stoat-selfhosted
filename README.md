@@ -83,6 +83,34 @@ Self-hosting Stoat using Docker
   composer pickers, the desktop titlebar, the account-deletion flow and three
   modals — are now in the translation catalogs.
 
+**Admin panel**
+
+- A standalone **admin panel** (`entbtw/stoat-admin`) is served by Caddy at
+  `https://<domain><ADMIN_PANEL_PATH>` — `/admin-panel` by default. The path is
+  set once in `compose.yml` (or `.env` via `ADMIN_PANEL_PATH`) and is used for
+  both the Caddy route and the panel's session cookie.
+- Log in with a privileged account's login (email, `username` or
+  `username#discriminator`) and password: the panel verifies the same argon2
+  hash the backend wrote and refuses anybody who is not `privileged`. Sessions
+  live in their own `admin_sessions` collection behind an HttpOnly cookie,
+  expire after seven days (configurable with `SESSION_TTL_DAYS`) and are
+  revoked the moment the account loses its rights. Failed logins are rate
+  limited per IP.
+- User management: search by email, username or ID, a detail view, **password
+  reset** (re-hashed with the backend's own argon2 parameters
+  `$argon2i$v=19$m=4096,t=3,p=1`, every session of that user is deleted and
+  connected clients receive `DeleteAllSessions`), grant/revoke administrator
+  rights and disable/enable an account (disabling also kicks all sessions).
+- Server management: a list with channel/member counts and owners, and
+  **deletion that repeats the backend's full cascade** — messages with their
+  attachment records, detached emojis, channels with invites/unreads/webhooks,
+  members/bans, server attachments, audit logs — followed by Redis voice-state
+  cleanup (`node:`/`vc:`/`vc_members:` keys) and a `ServerDelete` event so
+  connected members watch the server disappear instead of erroring into it.
+- The panel talks to MongoDB directly (no extra API, no extra schema); it only
+  needs the `admin-panel` service in `compose.yml`. The UI follows the Stoat
+  design, generated from the client's default Material 3 scheme.
+
 ### Images used by `compose.yml`
 
 | Service           | Image                              |
@@ -97,12 +125,14 @@ Self-hosting Stoat using Docker
 | `pushd`           | `entbtw/stoat:latest-pushd`        |
 | `voice-ingress`   | `entbtw/stoat:latest-voice-ingress`|
 | `livekit`         | `entbtw/stoat:latest-livekit`      |
+| `admin-panel`     | `entbtw/stoat-admin:latest`        |
 
 `compose.yml` deliberately tracks `latest` and `latest-<component>` so the
 example stays universal — the tags move together whenever a release is pushed.
-The same release is also published under a pinned version (`v0.0.8`,
-`v0.0.8-api`, …, `v0.0.8-web`); swap any `latest-*` tag for its pinned
-counterpart when you want a reproducible deploy.
+The same release is also published under a pinned version (`v0.0.9`,
+`v0.0.9-api`, …, `v0.0.9-web`); swap any `latest-*` tag for its pinned
+counterpart when you want a reproducible deploy. The admin panel is versioned
+on its own and published as `v0.0.1` alongside `latest`.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
 fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.

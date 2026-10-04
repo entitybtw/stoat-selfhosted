@@ -58,5 +58,15 @@
 		}
 	}
 
+	# Admin panel: path is configurable in compose.yml (ADMIN_PANEL_PATH)
+	route {$ADMIN_PANEL_PATH} {
+		redir * {$ADMIN_PANEL_PATH}/ 308
+	}
+
+	route {$ADMIN_PANEL_PATH}* {
+		uri strip_prefix {$ADMIN_PANEL_PATH}
+		reverse_proxy http://admin-panel:8080
+	}
+
 	reverse_proxy http://web:5000
 }

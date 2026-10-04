@@ -1,0 +1,548 @@
+/* Stoat admin panel — Material 3 scheme generated from the Stoat default
+   accent #5470ec (tonal spot, dark) to match the main client. */
+
+:root {
+  --bg: #121318;
+  --on-surface: #e3e1e9;
+  --on-surface-var: #c6c5d0;
+  --outline: #90909a;
+  --outline-variant: #45464f;
+  --surface-lowest: #0d0e13;
+  --surface-low: #1b1b21;
+  --surface: #1f1f25;
+  --surface-high: #292a2f;
+  --surface-highest: #34343a;
+  --primary: #b9c3ff;
+  --on-primary: #202c61;
+  --primary-container: #384379;
+  --on-primary-container: #dde1ff;
+  --secondary-container: #424659;
+  --on-secondary-container: #dfe1f9;
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --online: #3abf7e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--on-surface);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+.mono {
+  font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+.dim {
+  color: var(--on-surface-var);
+}
+
+.strong {
+  font-weight: 600;
+}
+
+/* ---------- layout ---------- */
+
+.shell {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 248px;
+  flex-shrink: 0;
+  background: var(--surface-lowest);
+  border-right: 1px solid var(--outline-variant);
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  padding: 20px 16px 16px;
+  font-size: 17px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  display: inline-block;
+}
+
+.brand-sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-surface-var);
+  margin-left: auto;
+}
+
+.sidebar nav {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-item {
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--on-surface);
+  font-size: 14.5px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.nav-item:hover {
+  background: var(--surface-high);
+}
+
+.nav-item.active {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px 16px;
+  border-top: 1px solid var(--outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13.5px;
+  min-width: 0;
+}
+
+.sidebar-footer .who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main {
+  flex: 1;
+  overflow: auto;
+  padding: 26px 30px 60px;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--on-surface-var);
+  font-size: 13.5px;
+  margin-top: 4px;
+}
+
+/* ---------- cards ---------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--outline-variant);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.card .num {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.card .label {
+  color: var(--on-surface-var);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* ---------- toolbar / inputs ---------- */
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 18px 0 14px;
+}
+
+input[type="text"],
+input[type="password"],
+.search {
+  background: var(--surface-high);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: var(--on-surface);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input:focus {
+  border-color: var(--primary);
+}
+
+.search {
+  flex: 1;
+  max-width: 420px;
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  border: none;
+  border-radius: 20px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.btn:hover {
+  filter: brightness(1.1);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  filter: none;
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn.tonal {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+
+.btn.danger {
+  background: var(--error);
+  color: var(--on-error);
+}
+
+.btn.flat {
+  background: transparent;
+  color: var(--primary);
+}
+
+.btn.small {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* ---------- table ---------- */
+
+.table-wrap {
+  border: 1px solid var(--outline-variant);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--on-surface-var);
+  padding: 12px 16px;
+  background: var(--surface-low);
+  font-weight: 600;
+}
+
+.table td {
+  padding: 11px 16px;
+  border-top: 1px solid var(--outline-variant);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.table tbody tr:hover td {
+  background: var(--surface-high);
+}
+
+.empty {
+  text-align: center;
+  color: var(--on-surface-var);
+  padding: 28px 16px !important;
+  cursor: default;
+}
+
+/* ---------- badges ---------- */
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.badge.admin {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+.badge.off {
+  background: var(--error-container);
+  color: var(--error);
+}
+
+.badge.ok {
+  background: rgba(58, 191, 126, 0.16);
+  color: var(--online);
+}
+
+.badge.gray {
+  background: var(--surface-highest);
+  color: var(--on-surface-var);
+}
+
+/* ---------- pager ---------- */
+
+.pager {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  color: var(--on-surface-var);
+  font-size: 14px;
+}
+
+/* ---------- login ---------- */
+
+.login-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: min(400px, 100%);
+  background: var(--surface-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: 28px;
+  padding: 34px 32px 30px;
+}
+
+.login-card h1 {
+  font-size: 21px;
+  margin-bottom: 2px;
+}
+
+.login-card .brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 22px;
+}
+
+.field {
+  margin-top: 14px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  color: var(--on-surface-var);
+  margin-bottom: 6px;
+}
+
+.field input {
+  width: 100%;
+}
+
+.hint {
+  color: var(--error);
+  font-size: 13px;
+  min-height: 18px;
+  margin-top: 8px;
+}
+
+.login-card .btn {
+  width: 100%;
+  margin-top: 18px;
+  padding: 11px;
+  font-size: 15px;
+}
+
+/* ---------- modal ---------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.modal {
+  width: min(540px, 100%);
+  max-height: 86vh;
+  overflow: auto;
+  background: var(--surface-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: 24px;
+  padding: 24px 26px;
+}
+
+.modal h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+}
+
+.modal h2 .dim {
+  font-weight: 400;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 7px 18px;
+  font-size: 14px;
+  margin-top: 14px;
+}
+
+.kv dt {
+  color: var(--on-surface-var);
+}
+
+.kv dd {
+  margin: 0;
+  word-break: break-all;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.row input {
+  flex: 1;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+.warn-text {
+  color: var(--error);
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+/* ---------- toasts ---------- */
+
+.toasts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+}
+
+.toast {
+  background: var(--surface-highest);
+  border: 1px solid var(--outline-variant);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  animation: toast-in 0.18s ease;
+}
+
+.toast.err {
+  border-color: var(--error);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    width: 64px;
+  }
+  .brand {
+    justify-content: center;
+    padding: 16px 6px;
+  }
+  .brand-sub,
+  .sidebar-footer .who {
+    display: none;
+  }
+  .nav-item {
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 12.5px;
+  }
+}
