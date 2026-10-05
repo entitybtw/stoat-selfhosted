@@ -1,26 +1,42 @@
-/* Stoat admin panel — Material 3 scheme generated from the Stoat default
-   accent #5470ec (tonal spot, dark) to match the main client. */
+/* Stoat admin panel — canonical Stoat client design.
+   Material 3 scheme generated from the Stoat default accent #5470ec
+   (tonal spot, dark); typography, shapes and component metrics follow
+   packages/client/components/ui (Button, Dialog, TextField, settings
+   _layout). No brand logo — the panel is intentionally wordmark-free. */
 
 :root {
-  --bg: #121318;
-  --on-surface: #e3e1e9;
-  --on-surface-var: #c6c5d0;
-  --outline: #90909a;
-  --outline-variant: #45464f;
-  --surface-lowest: #0d0e13;
-  --surface-low: #1b1b21;
-  --surface: #1f1f25;
-  --surface-high: #292a2f;
-  --surface-highest: #34343a;
-  --primary: #b9c3ff;
-  --on-primary: #202c61;
-  --primary-container: #384379;
-  --on-primary-container: #dde1ff;
-  --secondary-container: #424659;
-  --on-secondary-container: #dfe1f9;
-  --error: #ffb4ab;
-  --on-error: #690005;
-  --error-container: #93000a;
+  /* --md-sys-color-* (canonical names) */
+  --md-sys-color-surface: #121318;
+  --md-sys-color-on-surface: #e3e1e9;
+  --md-sys-color-on-surface-variant: #c6c5d0;
+  --md-sys-color-surface-dim: #121318;
+  --md-sys-color-surface-container-lowest: #0d0e13;
+  --md-sys-color-surface-container-low: #1b1b21;
+  --md-sys-color-surface-container: #1f1f25;
+  --md-sys-color-surface-container-high: #292a2f;
+  --md-sys-color-surface-container-highest: #34343a;
+  --md-sys-color-outline: #90909a;
+  --md-sys-color-outline-variant: #45464f;
+  --md-sys-color-primary: #b9c3ff;
+  --md-sys-color-on-primary: #202c61;
+  --md-sys-color-primary-container: #384379;
+  --md-sys-color-on-primary-container: #dde1ff;
+  --md-sys-color-secondary-container: #424659;
+  --md-sys-color-on-secondary-container: #dfe1f9;
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000a;
+  --md-sys-color-on-error-container: #ffdad6;
+
+  /* Material 3 Expressive shape scale (stoatWebTheme.ts) */
+  --borderRadius-xs: 4px;
+  --borderRadius-sm: 8px;
+  --borderRadius-md: 12px;
+  --borderRadius-lg: 16px;
+  --borderRadius-li: 20px;
+  --borderRadius-xl: 28px;
+
+  /* presence */
   --online: #3abf7e;
 }
 
@@ -36,15 +52,18 @@ body {
 }
 
 body {
-  background: var(--bg);
-  color: var(--on-surface);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 15px;
+  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font-family: inherit;
 }
 
@@ -54,14 +73,31 @@ input {
 }
 
 .dim {
-  color: var(--on-surface-var);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .strong {
   font-weight: 600;
 }
 
-/* ---------- layout ---------- */
+/* ---------- typography (Text.tsx metrics) ---------- */
+
+h1 {
+  font-size: 1.375rem;
+  line-height: 1.75rem;
+  font-weight: 550;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  margin-top: 4px;
+}
+
+/* ---------- layout: sidebar + settings-style content pane ---------- */
 
 .shell {
   display: flex;
@@ -71,69 +107,54 @@ input {
 .sidebar {
   width: 248px;
   flex-shrink: 0;
-  background: var(--surface-lowest);
-  border-right: 1px solid var(--outline-variant);
   display: flex;
   flex-direction: column;
+  padding: 20px 0 12px;
 }
 
-.brand {
-  padding: 20px 16px 16px;
-  font-size: 17px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.brand-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 5px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-container));
-  display: inline-block;
-}
-
-.brand-sub {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--on-surface-var);
-  margin-left: auto;
+.sidebar-header {
+  padding: 0 20px 16px;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 550;
+  letter-spacing: 0.009375rem;
 }
 
 .sidebar nav {
-  padding: 6px 8px;
+  padding: 0 8px;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
+/* SidebarButton.tsx: padding 6/8, radius 8, weight 500, size 15,
+   selected → primary-container, transition 0.1s */
 .nav-item {
   text-align: left;
   background: transparent;
   border: none;
-  color: var(--on-surface);
-  font-size: 14.5px;
-  padding: 10px 14px;
-  border-radius: 12px;
+  color: var(--md-sys-color-on-surface);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 6px 8px;
+  border-radius: var(--borderRadius-sm);
   cursor: pointer;
-  transition: background 0.15s ease;
+  user-select: none;
+  margin-inline-end: 12px;
+  transition: background-color 0.1s ease-in-out;
 }
 
 .nav-item:hover {
-  background: var(--surface-high);
+  background: var(--md-sys-color-surface-container-high);
 }
 
 .nav-item.active {
-  background: var(--primary-container);
-  color: var(--on-primary-container);
-  font-weight: 600;
+  background: var(--md-sys-color-primary-container);
 }
 
 .sidebar-footer {
   margin-top: auto;
-  padding: 14px 16px;
-  border-top: 1px solid var(--outline-variant);
+  padding: 12px 20px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -148,21 +169,54 @@ input {
   white-space: nowrap;
 }
 
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* language switcher: segmented text buttons */
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--borderRadius-sm);
+  overflow: hidden;
+}
+
+.lang-switch button {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03125rem;
+  padding: 4px 7px;
+  cursor: pointer;
+}
+
+.lang-switch button:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+.lang-switch button.active {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+/* Content.tsx: surface-container-low pane, 30px start corners */
 .main {
   flex: 1;
+  min-width: 0;
   overflow: auto;
-  padding: 26px 30px 60px;
+  background: var(--md-sys-color-surface-container-low);
+  border-start-start-radius: 30px;
+  border-end-start-radius: 30px;
+  padding: 40px 32px 64px;
 }
 
-h1 {
-  font-size: 22px;
-  margin: 0;
-}
-
-.subtitle {
-  color: var(--on-surface-var);
-  font-size: 13.5px;
-  margin-top: 4px;
+.main-inner {
+  max-width: 1080px;
 }
 
 /* ---------- cards ---------- */
@@ -171,13 +225,13 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 12px;
-  margin-top: 18px;
+  margin-top: 20px;
 }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--outline-variant);
-  border-radius: 16px;
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--borderRadius-lg);
   padding: 16px 18px;
 }
 
@@ -187,96 +241,191 @@ h1 {
 }
 
 .card .label {
-  color: var(--on-surface-var);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 13px;
   margin-top: 2px;
 }
 
-/* ---------- toolbar / inputs ---------- */
+/* ---------- toolbar / inputs (M3 filled text field) ---------- */
 
 .toolbar {
   display: flex;
   gap: 10px;
   align-items: center;
-  margin: 18px 0 14px;
+  margin: 20px 0 14px;
 }
 
 input[type="text"],
 input[type="password"],
+input[type="email"],
+textarea,
 .search {
-  background: var(--surface-high);
-  border: 1px solid transparent;
-  border-radius: 12px;
-  padding: 10px 14px;
-  color: var(--on-surface);
-  font-size: 14px;
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+  border: none;
+  border-bottom: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--borderRadius-xs) var(--borderRadius-xs) 0 0;
+  padding: 12px 16px;
+  font-size: 15px;
   outline: none;
   transition: border-color 0.15s ease;
+  width: 100%;
 }
 
-input:focus {
-  border-color: var(--primary);
+input::placeholder,
+textarea::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+input:focus,
+textarea:focus {
+  border-bottom: 2px solid var(--md-sys-color-primary);
+  padding-bottom: 11px;
+}
+
+input[readonly] {
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: copy;
 }
 
 .search {
   flex: 1;
-  max-width: 420px;
+  max-width: 460px;
 }
 
-/* ---------- buttons ---------- */
+.field {
+  margin-top: 14px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.03125rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 6px;
+}
+
+.hint {
+  color: var(--md-sys-color-error);
+  font-size: 13px;
+  min-height: 18px;
+  margin-top: 8px;
+}
+
+.hint:empty {
+  min-height: 0;
+  margin-top: 0;
+}
+
+.hint.note {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.row input {
+  flex: 1;
+}
+
+.row.end {
+  justify-content: flex-end;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+/* ---------- buttons (Button.tsx: sm = h40 / r20 / pad16 / w500) ---------- */
 
 .btn {
   border: none;
-  border-radius: 20px;
-  padding: 9px 18px;
+  height: 40px;
+  padding-inline: 16px;
+  border-radius: var(--borderRadius-li);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: filter 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: filter 0.15s ease, background-color 0.15s ease;
 }
 
 .btn:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
+}
+
+.btn:active {
+  filter: brightness(0.95);
 }
 
 .btn:disabled {
-  opacity: 0.45;
-  cursor: default;
+  cursor: not-allowed;
   filter: none;
+  color: color-mix(in srgb, 38% var(--md-sys-color-on-surface), transparent);
+  background: color-mix(in srgb, 10% var(--md-sys-color-on-surface), transparent);
 }
 
+.btn.filled,
 .btn.primary {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
 }
 
 .btn.tonal {
-  background: var(--secondary-container);
-  color: var(--on-secondary-container);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.btn.outlined {
+  background: transparent;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.btn.text,
+.btn.flat {
+  background: transparent;
+  color: var(--md-sys-color-primary);
 }
 
 .btn.danger {
-  background: var(--error);
-  color: var(--on-error);
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
 }
 
-.btn.flat {
+.btn.danger-text {
   background: transparent;
-  color: var(--primary);
+  color: var(--md-sys-color-error);
 }
 
 .btn.small {
-  padding: 6px 12px;
+  height: 32px;
+  padding-inline: 12px;
+  border-radius: 16px;
   font-size: 13px;
+}
+
+.btn.block {
+  width: 100%;
 }
 
 /* ---------- table ---------- */
 
 .table-wrap {
-  border: 1px solid var(--outline-variant);
-  border-radius: 16px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--borderRadius-lg);
   overflow: hidden;
-  background: var(--surface);
+  background: var(--md-sys-color-surface-container);
 }
 
 .table {
@@ -289,36 +438,36 @@ input:focus {
   font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--on-surface-var);
+  color: var(--md-sys-color-on-surface-variant);
   padding: 12px 16px;
-  background: var(--surface-low);
+  background: var(--md-sys-color-surface-container-low);
   font-weight: 600;
 }
 
 .table td {
   padding: 11px 16px;
-  border-top: 1px solid var(--outline-variant);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
   font-size: 14px;
   vertical-align: middle;
 }
 
 .table tbody tr {
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: background-color 0.1s ease-in-out;
 }
 
 .table tbody tr:hover td {
-  background: var(--surface-high);
+  background: var(--md-sys-color-surface-container-high);
 }
 
 .empty {
   text-align: center;
-  color: var(--on-surface-var);
-  padding: 28px 16px !important;
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 32px 16px !important;
   cursor: default;
 }
 
-/* ---------- badges ---------- */
+/* ---------- badges (chips) ---------- */
 
 .badge {
   display: inline-block;
@@ -330,13 +479,13 @@ input:focus {
 }
 
 .badge.admin {
-  background: var(--primary-container);
-  color: var(--on-primary-container);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
 }
 
 .badge.off {
-  background: var(--error-container);
-  color: var(--error);
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
 }
 
 .badge.ok {
@@ -345,8 +494,8 @@ input:focus {
 }
 
 .badge.gray {
-  background: var(--surface-highest);
-  color: var(--on-surface-var);
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 /* ---------- pager ---------- */
@@ -356,11 +505,11 @@ input:focus {
   gap: 10px;
   align-items: center;
   margin-top: 14px;
-  color: var(--on-surface-var);
+  color: var(--md-sys-color-on-surface-variant);
   font-size: 14px;
 }
 
-/* ---------- login ---------- */
+/* ---------- login (Dialog metrics: r28 / pad24 / high container) ---------- */
 
 .login-wrap {
   min-height: 100vh;
@@ -371,84 +520,94 @@ input:focus {
 
 .login-card {
   width: min(400px, 100%);
-  background: var(--surface-low);
-  border: 1px solid var(--outline-variant);
-  border-radius: 28px;
-  padding: 34px 32px 30px;
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--borderRadius-xl);
+  padding: 32px;
+  position: relative;
 }
 
 .login-card h1 {
-  font-size: 21px;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 400;
   margin-bottom: 2px;
 }
 
-.login-card .brand-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 19px;
-  font-weight: 700;
-  margin-bottom: 22px;
-}
-
-.field {
-  margin-top: 14px;
-}
-
-.field label {
-  display: block;
-  font-size: 13px;
-  color: var(--on-surface-var);
-  margin-bottom: 6px;
-}
-
-.field input {
-  width: 100%;
-}
-
-.hint {
-  color: var(--error);
-  font-size: 13px;
-  min-height: 18px;
-  margin-top: 8px;
+.login-card .lang-switch {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
 .login-card .btn {
   width: 100%;
-  margin-top: 18px;
-  padding: 11px;
-  font-size: 15px;
+  margin-top: 20px;
 }
 
-/* ---------- modal ---------- */
+/* ---------- modal / dialog (Dialog.tsx) ---------- */
 
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   display: grid;
   place-items: center;
   z-index: 50;
-  padding: 20px;
+  padding: 30px;
+  overflow-y: auto;
 }
 
 .modal {
-  width: min(540px, 100%);
+  width: min(560px, 100%);
   max-height: 86vh;
   overflow: auto;
-  background: var(--surface-low);
-  border: 1px solid var(--outline-variant);
-  border-radius: 24px;
-  padding: 24px 26px;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: var(--borderRadius-xl);
+  padding: 24px;
+  color: var(--md-sys-color-on-surface);
 }
 
 .modal h2 {
   margin: 0 0 4px;
-  font-size: 19px;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 400;
 }
 
 .modal h2 .dim {
   font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* modal content is on-surface-variant, canonical Dialog.Content */
+.modal .kv,
+.modal .field,
+.modal .msec-title {
+  color: var(--md-sys-color-on-surface);
+}
+
+.modal .subtitle {
+  margin-bottom: 4px;
+}
+
+.msec {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.msec:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.msec-title {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 550;
+  letter-spacing: 0.009375rem;
+  margin-bottom: 4px;
 }
 
 .kv {
@@ -456,11 +615,11 @@ input:focus {
   grid-template-columns: auto 1fr;
   gap: 7px 18px;
   font-size: 14px;
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .kv dt {
-  color: var(--on-surface-var);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .kv dd {
@@ -468,30 +627,25 @@ input:focus {
   word-break: break-all;
 }
 
-.row {
-  display: flex;
-  gap: 8px;
-}
-
-.row input {
-  flex: 1;
-}
-
 .modal-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: flex-end;
-  margin-top: 22px;
+  margin-top: 24px;
   flex-wrap: wrap;
 }
 
-.warn-text {
-  color: var(--error);
-  font-size: 14px;
-  margin-top: 10px;
+.esc-hint::after {
+  content: "ESC";
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 4px;
 }
 
-/* ---------- toasts ---------- */
+/* ---------- toasts (Snackbar) ---------- */
 
 .toasts {
   position: fixed;
@@ -504,17 +658,18 @@ input:focus {
 }
 
 .toast {
-  background: var(--surface-highest);
-  border: 1px solid var(--outline-variant);
-  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-highest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--borderRadius-md);
   padding: 12px 16px;
   font-size: 14px;
+  color: var(--md-sys-color-on-surface);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   animation: toast-in 0.18s ease;
 }
 
 .toast.err {
-  border-color: var(--error);
+  border-color: var(--md-sys-color-error);
 }
 
 @keyframes toast-in {
@@ -528,21 +683,36 @@ input:focus {
   }
 }
 
+/* ---------- responsive ---------- */
+
 @media (max-width: 760px) {
+  .shell {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
   .sidebar {
-    width: 64px;
+    width: 100%;
+    padding: 12px 0;
   }
-  .brand {
-    justify-content: center;
-    padding: 16px 6px;
-  }
-  .brand-sub,
-  .sidebar-footer .who {
-    display: none;
+  .sidebar nav {
+    flex-direction: row;
+    flex-wrap: wrap;
   }
   .nav-item {
-    text-align: center;
-    padding: 10px 4px;
-    font-size: 12.5px;
+    margin-inline-end: 0;
+  }
+  .sidebar-footer {
+    padding-top: 8px;
+  }
+  .main {
+    border-radius: 0;
+    padding: 20px 14px 48px;
+  }
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+  .overlay {
+    padding: 12px;
   }
 }

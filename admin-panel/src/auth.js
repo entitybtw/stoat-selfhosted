@@ -102,7 +102,7 @@ export function clearSessionCookie(res, req) {
  * account._id is the same ULID as users._id (both sides of authifier).
  */
 async function findTarget(login) {
-  const invalid = { error: "Неверный логин или пароль" };
+  const invalid = { error: "Неверный логин или пароль", code: "invalid_credentials" };
 
   if (login.includes("@")) {
     const email = new RegExp(`^${escapeRegex(login)}$`, "i");
@@ -131,6 +131,7 @@ async function findTarget(login) {
   if (users.length > 1) {
     return {
       error: "Найдено несколько пользователей — войдите по email или username#дискриминатор",
+      code: "ambiguous_login",
     };
   }
 
@@ -154,36 +155,46 @@ export function publicUser(user) {
 export async function handleLogin(req, res) {
   const ip = req.ip || "unknown";
   if (!canAttempt(ip)) {
-    return res
-      .status(429)
-      .json({ error: "Слишком много попыток входа, попробуйте позже" });
+    return res.status(429).json({
+      error: "Слишком много попыток входа, попробуйте позже",
+      code: "rate_limited",
+    });
   }
 
   const { login, password } = req.body || {};
   if (typeof login !== "string" || typeof password !== "string" || !login || !password) {
-    return res.status(400).json({ error: "Укажите логин и пароль" });
+    return res
+      .status(400)
+      .json({ error: "Укажите логин и пароль", code: "missing_fields" });
   }
 
   const target = await findTarget(login.trim());
   if (target.error) {
     registerFailure(ip);
-    return res.status(401).json({ error: target.error });
+    return res
+      .status(401)
+      .json({ error: target.error, code: target.code || "invalid_credentials" });
   }
 
   const { account, user } = target;
   const valid = await checkPassword(account.password, password);
   if (!valid) {
     registerFailure(ip);
-    return res.status(401).json({ error: "Неверный логин или пароль" });
+    return res
+      .status(401)
+      .json({ error: "Неверный логин или пароль", code: "invalid_credentials" });
   }
   if (account.disabled) {
-    return res.status(403).json({ error: "Аккаунт отключён" });
+    return res
+      .status(403)
+      .json({ error: "Аккаунт отключён", code: "account_disabled" });
   }
   if (!user.privileged) {
     // password was correct — do not count this as a failed attempt
-    return res
-      .status(403)
-      .json({ error: "Доступ только для привилегированных пользователей" });
+    return res.status(403).json({
+      error: "Доступ только для привилегированных пользователей",
+      code: "not_privileged",
+    });
   }
 
   attempts.delete(ip);
@@ -215,20 +226,26 @@ export async function requireAuth(req, res, next) {
   try {
     const token = readCookie(req, COOKIE_NAME);
     if (!token) {
-      return res.status(401).json({ error: "Требуется вход" });
+      return res
+        .status(401)
+        .json({ error: "Требуется вход", code: "unauthenticated" });
     }
 
     const session = await col("admin_sessions").findOne({ _id: token });
     if (!session || session.expires < new Date()) {
       clearSessionCookie(res, req);
-      return res.status(401).json({ error: "Сессия истекла" });
+      return res
+        .status(401)
+        .json({ error: "Сессия истекла", code: "session_expired" });
     }
 
     const user = await col("users").findOne({ _id: session.user_id });
     if (!user || !user.privileged) {
       await col("admin_sessions").deleteOne({ _id: token });
       clearSessionCookie(res, req);
-      return res.status(403).json({ error: "Доступ запрещён" });
+      return res
+        .status(403)
+        .json({ error: "Доступ запрещён", code: "access_denied" });
     }
 
     req.admin = { user, sessionId: token };

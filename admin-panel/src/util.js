@@ -1,5 +1,24 @@
+import crypto from "node:crypto";
+
 /** Crockford base32 alphabet used by ULIDs. */
 const ULID_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+/**
+ * Generate a ULID (10 chars of timestamp + 16 random) — used as the
+ * `event_id` of UserUpdate events, matching EventV1's own ids.
+ */
+export function ulid() {
+  let time = Date.now();
+  let stamp = "";
+  for (let index = 0; index < 10; index += 1) {
+    stamp = ULID_ALPHABET[time % 32] + stamp;
+    time = Math.floor(time / 32);
+  }
+  const bytes = crypto.randomBytes(16);
+  let random = "";
+  for (const byte of bytes) random += ULID_ALPHABET[byte % 32];
+  return stamp + random;
+}
 
 /** Extract creation time (ms) from a ULID, or null. */
 export function ulidTimestamp(id) {

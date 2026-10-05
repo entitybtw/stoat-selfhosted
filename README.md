@@ -96,20 +96,37 @@ Self-hosting Stoat using Docker
   expire after seven days (configurable with `SESSION_TTL_DAYS`) and are
   revoked the moment the account loses its rights. Failed logins are rate
   limited per IP.
-- User management: search by email, username or ID, a detail view, **password
+- User management: search by email, username or ID, a detail view with the
+  account's **current data** (login email and its normalised form, verification
+  status, the read-only argon2 password hash, MFA, badges/flags, sessions,
+  suspension), **detailed profile editing** — username, discriminator (typed
+  explicitly or re-rolled automatically with one click), display name and
+  pronouns, all validated exactly like the backend and broadcast as `UserUpdate`
+  to the user's own channel plus every member channel — **email change**
+  (normalised like `util/email.rs`, duplicate-checked against both unique
+  indexes, forced to `Verified` so the account stays loginable), **password
   reset** (re-hashed with the backend's own argon2 parameters
   `$argon2i$v=19$m=4096,t=3,p=1`, every session of that user is deleted and
   connected clients receive `DeleteAllSessions`), grant/revoke administrator
   rights and disable/enable an account (disabling also kicks all sessions).
-- Server management: a list with channel/member counts and owners, and
-  **deletion that repeats the backend's full cascade** — messages with their
+- Server management: a list with channel/member counts, owners and
+  descriptions, **renaming** (name 1–32 chars, description up to 1024 — the same
+  rules as `DataEditServer`, published as `ServerUpdate` on the server channel),
+  and **deletion that repeats the backend's full cascade** — messages with their
   attachment records, detached emojis, channels with invites/unreads/webhooks,
   members/bans, server attachments, audit logs — followed by Redis voice-state
   cleanup (`node:`/`vc:`/`vc_members:` keys) and a `ServerDelete` event so
   connected members watch the server disappear instead of erroring into it.
+- The UI is **fully multilingual (ru/en)** with a switcher on the login card and
+  in the sidebar (persisted in `localStorage`, otherwise the browser language);
+  every API error is localised by its machine-readable `code` with the server
+  message as fallback. The design follows the canonical Stoat client — the same
+  Material 3 token names, shape scale, sidebar + rounded content pane, filled
+  inputs and dialog metrics — with no brand logo. Async views are guarded by a
+  render-generation counter with null-checked DOM writes, so fast navigation
+  can no longer trip over removed elements.
 - The panel talks to MongoDB directly (no extra API, no extra schema); it only
-  needs the `admin-panel` service in `compose.yml`. The UI follows the Stoat
-  design, generated from the client's default Material 3 scheme.
+  needs the `admin-panel` service in `compose.yml`.
 
 ### Images used by `compose.yml`
 
@@ -132,7 +149,7 @@ example stays universal — the tags move together whenever a release is pushed.
 The same release is also published under a pinned version (`v0.0.9`,
 `v0.0.9-api`, …, `v0.0.9-web`); swap any `latest-*` tag for its pinned
 counterpart when you want a reproducible deploy. The admin panel is versioned
-on its own and published as `v0.0.1` alongside `latest`.
+on its own and published as `v0.0.2` alongside `latest`.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
 fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.

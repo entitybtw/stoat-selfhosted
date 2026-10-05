@@ -1,6 +1,7 @@
 import { col } from "../db.js";
 import { publishEvent, cleanupChannelVoice, cleanupServerUserState } from "../redis.js";
 import { escapeRegex, parsePaging, ulidTimestamp, ah } from "../util.js";
+import { serverNameError, serverDescriptionError } from "../validate.js";
 
 export const listServers = ah(async (req, res) => {
   const { page, limit, skip } = parsePaging(req.query);
@@ -60,6 +61,7 @@ export const listServers = ah(async (req, res) => {
     items: servers.map((server) => ({
       id: server._id,
       name: server.name,
+      description: server.description ?? null,
       owner: server.owner,
       ownerTag: ownersBy.get(server.owner) || null,
       channels: channelsBy.get(server._id) || 0,
@@ -67,6 +69,78 @@ export const listServers = ah(async (req, res) => {
       createdAt: ulidTimestamp(server._id),
     })),
   });
+});
+
+/**
+ * POST /api/servers/:id/rename
+ *
+ * Rename a server (and optionally set/clear its description) exactly like
+ * DataEditServer validation: name 1–32 chars, description ≤ 1024.
+ * Publishes EventV1::ServerUpdate on the server's own channel.
+ */
+export const renameServer = ah(async (req, res) => {
+  const body = req.body || {};
+  if (!Object.prototype.hasOwnProperty.call(body, "name")) {
+    return res
+      .status(400)
+      .json({ error: "Укажите новое название", code: "missing_name" });
+  }
+
+  const code = serverNameError(body.name);
+  if (code) {
+    return res
+      .status(400)
+      .json({ error: "Недопустимое название сервера", code });
+  }
+
+  const server = await col("servers").findOne({ _id: req.params.id });
+  if (!server) {
+    return res
+      .status(404)
+      .json({ error: "Сервер не найден", code: "not_found" });
+  }
+
+  const $set = { name: body.name };
+  const data = { name: body.name };
+  const clear = [];
+
+  if (Object.prototype.hasOwnProperty.call(body, "description")) {
+    if (body.description === null || body.description === "") {
+      if (server.description !== undefined) {
+        // PartialServer clear: remove the field entirely
+        clear.push("Description");
+      }
+    } else {
+      const descriptionCode = serverDescriptionError(body.description);
+      if (descriptionCode) {
+        return res
+          .status(400)
+          .json({ error: "Недопустимое описание", code: descriptionCode });
+      }
+      $set.description = body.description;
+      data.description = body.description;
+    }
+  }
+
+  const update = { $set };
+  if (clear.length > 0) update.$unset = { description: "" };
+
+  const result = await col("servers").updateOne({ _id: server._id }, update);
+  if (result.matchedCount === 0) {
+    return res
+      .status(404)
+      .json({ error: "Сервер не найден", code: "not_found" });
+  }
+
+  // EventV1::ServerUpdate { id, data, clear } published on the server channel
+  await publishEvent(server._id, {
+    type: "ServerUpdate",
+    id: server._id,
+    data,
+    clear,
+  });
+
+  res.json({ ok: true, name: $set.name, description: $set.description ?? null });
 });
 
 /**

@@ -18,8 +18,10 @@ import {
   setUserPassword,
   setUserPrivileged,
   setUserDisabled,
+  setUserProfile,
+  setUserEmail,
 } from "./routes/users.js";
-import { listServers, deleteServer } from "./routes/servers.js";
+import { listServers, renameServer, deleteServer } from "./routes/servers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "..", "public");
@@ -50,10 +52,15 @@ app.use((req, res, next) => {
   if (origin) {
     try {
       if (new URL(origin).host !== req.get("host")) {
-        return res.status(403).json({ error: "Запрос с другого origin отклонён" });
+        return res.status(403).json({
+          error: "Запрос с другого origin отклонён",
+          code: "bad_origin",
+        });
       }
     } catch {
-      return res.status(403).json({ error: "Некорректный origin" });
+      return res
+        .status(403)
+        .json({ error: "Некорректный origin", code: "bad_origin" });
     }
   }
   next();
@@ -68,17 +75,20 @@ app.get("/api/stats", requireAuth, getStats);
 
 app.get("/api/users", requireAuth, listUsers);
 app.get("/api/users/:id", requireAuth, getUser);
+app.post("/api/users/:id/profile", requireAuth, setUserProfile);
+app.post("/api/users/:id/email", requireAuth, setUserEmail);
 app.post("/api/users/:id/password", requireAuth, setUserPassword);
 app.post("/api/users/:id/privileged", requireAuth, setUserPrivileged);
 app.post("/api/users/:id/disabled", requireAuth, setUserDisabled);
 
 app.get("/api/servers", requireAuth, listServers);
+app.post("/api/servers/:id/rename", requireAuth, renameServer);
 app.delete("/api/servers/:id", requireAuth, deleteServer);
 
 app.use(express.static(publicDir, { index: "index.html" }));
 app.use((req, res, next) => {
   if (req.path.startsWith("/api")) {
-    return res.status(404).json({ error: "Не найдено" });
+    return res.status(404).json({ error: "Не найдено", code: "not_found" });
   }
   res.sendFile(path.join(publicDir, "index.html"));
 });
@@ -87,7 +97,7 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   console.error(`[error] ${req.method} ${req.path}:`, err);
   if (res.headersSent) return next(err);
-  res.status(500).json({ error: "Внутренняя ошибка" });
+  res.status(500).json({ error: "Внутренняя ошибка", code: "internal" });
 });
 
 await connectDb();
