@@ -83,6 +83,21 @@ Self-hosting Stoat using Docker
   composer pickers, the desktop titlebar, the account-deletion flow and three
   modals — are now in the translation catalogs.
 
+**Account & identity**
+
+- You can now change your **username and discriminator yourself** from
+  Settings → Account: the tag field takes any free 4-digit tag from the
+  allowed pool, keeps the current one, or re-rolls it — the pair is checked
+  against every existing account, reserved tags are refused, and an actual
+  tag change is rate limited once per 24 h. The new tag reaches *everybody
+  who needs it*: your own sessions and shared-server members through the
+  regular `UserUpdate` fan-out, and friends who share no server with you
+  over their private topics — a DM-only friend no longer sits on a stale
+  `name#tag`. Relationships, servers and roles key off the immutable user id,
+  so nothing you hold is touched by the rename. "Taken" and "not allowed"
+  tag errors, and the `Your username is now X#Y` confirmation, are translated
+  in every client catalog that is filled.
+
 **Admin panel**
 
 - A standalone **admin panel** (`entbtw/stoat-admin`) is served by Caddy at
@@ -102,7 +117,8 @@ Self-hosting Stoat using Docker
   suspension), **detailed profile editing** — username, discriminator (typed
   explicitly or re-rolled automatically with one click), display name and
   pronouns, all validated exactly like the backend and broadcast as `UserUpdate`
-  to the user's own channel plus every member channel — **email change**
+  to the user's own channel, every member channel **and every friend's
+  private topic** (DM-only friends see the new tag too) — **email change**
   (normalised like `util/email.rs`, duplicate-checked against both unique
   indexes, forced to `Verified` so the account stays loginable), **password
   reset** (re-hashed with the backend's own argon2 parameters
@@ -117,14 +133,24 @@ Self-hosting Stoat using Docker
   members/bans, server attachments, audit logs — followed by Redis voice-state
   cleanup (`node:`/`vc:`/`vc_members:` keys) and a `ServerDelete` event so
   connected members watch the server disappear instead of erroring into it.
-- The UI is **fully multilingual (ru/en)** with a switcher on the login card and
-  in the sidebar (persisted in `localStorage`, otherwise the browser language);
-  every API error is localised by its machine-readable `code` with the server
-  message as fallback. The design follows the canonical Stoat client — the same
-  Material 3 token names, shape scale, sidebar + rounded content pane, filled
-  inputs and dialog metrics — with no brand logo. Async views are guarded by a
-  render-generation counter with null-checked DOM writes, so fast navigation
-  can no longer trip over removed elements.
+- The UI is **fully multilingual — all 69 Stoat languages**, picked from a
+  dropdown on the login card and in the sidebar (persisted in `localStorage`,
+  otherwise matched from the browser language: exact code, then sensible
+  fallbacks like `zh-cn → zh-Hans`, `no → nb-NO`, `pt → pt-BR`, then the base
+  language, then English). Everything except ru/en lazy-loads from
+  `public/i18n/<code>.js`, so the boot payload stays small; RTL scripts
+  (ar/fa/ur/ckb) flip the document direction, `Intl` formatting degrades
+  gracefully for the joke locales, and every API error is localised by its
+  machine-readable `code` with the server message as fallback. The design
+  follows the canonical Stoat client — the same Material 3 token names, shape
+  scale, sidebar + rounded content pane, filled inputs and dialog metrics —
+  with no brand logo, and the layout is **mobile-ready**: the sidebar becomes
+  a sticky single-line top bar, tables scroll horizontally instead of
+  crushing columns, dialogs go near-fullscreen with stacked full-width
+  actions, toolbars/pagers wrap, and inputs render at 16 px so iOS Safari
+  never auto-zooms. Async views are guarded by a render-generation counter
+  with null-checked DOM writes, so fast navigation can no longer trip over
+  removed elements.
 - The panel talks to MongoDB directly (no extra API, no extra schema); it only
   needs the `admin-panel` service in `compose.yml`.
 
@@ -146,10 +172,10 @@ Self-hosting Stoat using Docker
 
 `compose.yml` deliberately tracks `latest` and `latest-<component>` so the
 example stays universal — the tags move together whenever a release is pushed.
-The same release is also published under a pinned version (`v0.0.9`,
-`v0.0.9-api`, …, `v0.0.9-web`); swap any `latest-*` tag for its pinned
+The same release is also published under a pinned version (`v0.0.10`,
+`v0.0.10-api`, …, `v0.0.10-web`); swap any `latest-*` tag for its pinned
 counterpart when you want a reproducible deploy. The admin panel is versioned
-on its own and published as `v0.0.2` alongside `latest`.
+on its own and published as `v0.0.3` alongside `latest`.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
 fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.

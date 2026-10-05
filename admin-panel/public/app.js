@@ -320,22 +320,143 @@ const I18N = {
   },
 };
 
+/* All languages shipped by the Stoat client (Languages.ts), same order.
+   en and ru are embedded below; every other code lazy-loads from
+   ./i18n/<code>.js (a plain `export default { … }` module). */
+const LANGS = [
+  { code: "en", display: "English (Traditional)", emoji: "🇬🇧" },
+  { code: "en-US", display: "English (Simplified)", emoji: "🇺🇸" },
+  { code: "ar", display: "عربي", emoji: "🇸🇦", rtl: true },
+  { code: "as", display: "অসমীয়া", emoji: "🇮🇳" },
+  { code: "az", display: "Azərbaycan dili", emoji: "🇦🇿" },
+  { code: "be", display: "Беларуская", emoji: "🇧🇾" },
+  { code: "bg", display: "Български", emoji: "🇧🇬" },
+  { code: "bn", display: "বাংলা", emoji: "🇧🇩" },
+  { code: "br", display: "Brezhoneg" },
+  { code: "ca", display: "Català", emoji: "🇪🇸" },
+  { code: "ceb", display: "Bisaya", emoji: "🇵🇭" },
+  { code: "ckb", display: "کوردی", rtl: true },
+  { code: "cs", display: "Čeština", emoji: "🇨🇿" },
+  { code: "da", display: "Dansk", emoji: "🇩🇰" },
+  { code: "de", display: "Deutsch", emoji: "🇩🇪" },
+  { code: "el", display: "Ελληνικά", emoji: "🇬🇷" },
+  { code: "es", display: "Español", emoji: "🇪🇸" },
+  { code: "es-419", display: "Español (América Latina)", emoji: "🇪🇸" },
+  { code: "et", display: "eesti", emoji: "🇪🇪" },
+  { code: "fi", display: "suomi", emoji: "🇫🇮" },
+  { code: "fil", display: "Filipino", emoji: "🇵🇭" },
+  { code: "fr", display: "Français", emoji: "🇫🇷" },
+  { code: "ga", display: "Gaeilge", emoji: "🇮🇪" },
+  { code: "hi", display: "हिन्दी", emoji: "🇮🇳" },
+  { code: "hr", display: "Hrvatski", emoji: "🇭🇷" },
+  { code: "hu", display: "Magyar", emoji: "🇭🇺" },
+  { code: "hy", display: "հայերեն", emoji: "🇦🇲" },
+  { code: "id", display: "Bahasa Indonesia", emoji: "🇮🇩" },
+  { code: "is", display: "Íslenska", emoji: "🇮🇸" },
+  { code: "it", display: "Italiano", emoji: "🇮🇹" },
+  { code: "ja", display: "日本語", emoji: "🇯🇵" },
+  { code: "ko", display: "한국어", emoji: "🇰🇷" },
+  { code: "lb", display: "Lëtzebuergesch", emoji: "🇱🇺" },
+  { code: "lt", display: "Lietuvių", emoji: "🇱🇹" },
+  { code: "lv", display: "Latviešu", emoji: "🇱🇻" },
+  { code: "mk", display: "Македонски", emoji: "🇲🇰" },
+  { code: "ms", display: "Bahasa Melayu", emoji: "🇲🇾" },
+  { code: "nb-NO", display: "Norsk bokmål", emoji: "🇳🇴" },
+  { code: "nl", display: "Nederlands", emoji: "🇳🇱" },
+  { code: "fa", display: "فارسی", emoji: "🇮🇷", rtl: true },
+  { code: "pl", display: "Polski", emoji: "🇵🇱" },
+  { code: "pt-BR", display: "Português (do Brasil)", emoji: "🇧🇷" },
+  { code: "pt-PT", display: "Português (Portugal)", emoji: "🇵🇹" },
+  { code: "ro", display: "Română", emoji: "🇷🇴" },
+  { code: "ru", display: "Русский", emoji: "🇷🇺" },
+  { code: "sk", display: "Slovensky", emoji: "🇸🇰" },
+  { code: "sl", display: "Slovenščina", emoji: "🇸🇮" },
+  { code: "sq", display: "Shqip", emoji: "🇦🇱" },
+  { code: "sr", display: "Српски", emoji: "🇷🇸" },
+  { code: "si", display: "සිංහල", emoji: "🇱🇰" },
+  { code: "sv", display: "Svenska", emoji: "🇸🇪" },
+  { code: "ta", display: "தமிழ்", emoji: "🇮🇳" },
+  { code: "th", display: "ไทย", emoji: "🇹🇭" },
+  { code: "tr", display: "Türkçe", emoji: "🇹🇷" },
+  { code: "ur", display: "اردو", emoji: "🇵🇰", rtl: true },
+  { code: "uk", display: "Українська", emoji: "🇺🇦" },
+  { code: "vec", display: "Vèneto" },
+  { code: "vi", display: "Tiếng Việt", emoji: "🇻🇳" },
+  { code: "zh-Hans", display: "简体中文", emoji: "🇨🇳" },
+  { code: "zh-Hant", display: "繁體中文", emoji: "🇹🇼" },
+  { code: "tokipona", display: "Toki Pona", emoji: "🙂" },
+  { code: "esperanto", display: "Esperanto" },
+  { code: "owo", display: "OwO", emoji: "😸" },
+  { code: "pr", display: "Pirate", emoji: "🏴‍☠️" },
+  { code: "bottom", display: "Bottom", emoji: "🥺" },
+  { code: "leet", display: "1337", emoji: "💾" },
+  { code: "enchantment", display: "Enchantment Table", emoji: "🪄" },
+  { code: "piglatin", display: "Pig Latin", emoji: "🐖" },
+  { code: "dev", display: "Developer Test", emoji: "🦝" },
+];
+
+const LANG_BY_CODE = new Map(LANGS.map((entry) => [entry.code, entry]));
+
 function detectLang() {
   try {
     const saved = localStorage.getItem("stoat_admin_lang");
-    if (saved && I18N[saved]) return saved;
+    if (saved && LANG_BY_CODE.has(saved)) return saved;
   } catch {
     /* storage unavailable */
   }
+
   const nav = (navigator.language || "en").toLowerCase();
-  if (nav.startsWith("ru")) return "ru";
+
+  /* exact code match, case-insensitive (pt-pt → pt-PT, nb-no → nb-NO …) */
+  const exact = LANGS.find((entry) => entry.code.toLowerCase() === nav);
+  if (exact) return exact.code;
+
+  /* base language with no usable sibling match */
+  const special = new Map([
+    ["zh", "zh-Hans"],
+    ["zh-cn", "zh-Hans"],
+    ["zh-sg", "zh-Hans"],
+    ["zh-tw", "zh-Hant"],
+    ["zh-hk", "zh-Hant"],
+    ["zh-mo", "zh-Hant"],
+    ["no", "nb-NO"],
+    ["nb", "nb-NO"],
+    ["nn", "nb-NO"],
+    ["pt", "pt-BR"],
+    ["fa-af", "fa"],
+    ["ckb-ir", "ckb"],
+  ]);
+  if (special.has(nav)) return special.get(nav);
+
+  const base = nav.split("-")[0];
+  if (LANG_BY_CODE.has(base)) return base;
+  const partial = LANGS.find(
+    (entry) => entry.code.toLowerCase().split("-")[0] === base,
+  );
+  if (partial) return partial.code;
   return "en";
 }
 
 let lang = detectLang();
 
+/* Lazily import a translation module (en/ru are already embedded). */
+async function ensureLang(code) {
+  if (I18N[code]) return true;
+  try {
+    const mod = await import(`./i18n/${code}.js`);
+    if (mod && mod.default && typeof mod.default === "object") {
+      I18N[code] = mod.default;
+      return true;
+    }
+  } catch {
+    /* missing or broken file */
+  }
+  return false;
+}
+
 function t(key, vars) {
-  let text = I18N[lang][key];
+  const dict = I18N[lang] || I18N.en;
+  let text = dict[key];
   if (text === undefined) text = I18N.en[key];
   if (text === undefined) text = key;
   if (vars) {
@@ -347,12 +468,18 @@ function t(key, vars) {
 }
 
 function applyStaticLang() {
+  const entry = LANG_BY_CODE.get(lang);
   document.documentElement.lang = lang;
+  document.documentElement.dir = entry && entry.rtl ? "rtl" : "ltr";
   document.title = t("doc_title");
 }
 
-function setLang(next) {
-  if (next === lang || !I18N[next]) return;
+async function setLang(next) {
+  if (next === lang || !LANG_BY_CODE.has(next)) return;
+  if (!(await ensureLang(next))) {
+    toast(t("load_error"));
+    return;
+  }
   lang = next;
   try {
     localStorage.setItem("stoat_admin_lang", lang);
@@ -364,7 +491,13 @@ function setLang(next) {
 }
 
 function locale() {
-  return lang === "ru" ? "ru-RU" : "en-US";
+  try {
+    new Intl.DateTimeFormat(lang);
+    return lang;
+  } catch {
+    /* non-BCP47 joke tags like "leet" or "enchantment" */
+    return "en";
+  }
 }
 
 /* ---------- state ------------------------------------------------------ */
@@ -427,7 +560,7 @@ function toast(message, isError = false) {
    server-provided message, else a generic string. */
 function errText(err) {
   const code = err && err.code;
-  if (code && I18N[lang][`err_${code}`]) return t(`err_${code}`);
+  if (code && I18N[lang] && I18N[lang][`err_${code}`]) return t(`err_${code}`);
   if (err && err.message) return err.message;
   return t("err_internal");
 }
@@ -473,16 +606,21 @@ function closeOverlays() {
 }
 
 function langSwitchHTML() {
+  const options = LANGS.map((entry) => {
+    const label = (entry.emoji ? `${entry.emoji} ` : "") + entry.display;
+    return `<option value="${esc(entry.code)}"${
+      entry.code === lang ? " selected" : ""
+    }>${esc(label)}</option>`;
+  }).join("");
   return `
     <div class="lang-switch">
-      <button type="button" data-set-lang="ru" class="${lang === "ru" ? "active" : ""}">RU</button>
-      <button type="button" data-set-lang="en" class="${lang === "en" ? "active" : ""}">EN</button>
+      <select class="lang-select" data-set-lang>${options}</select>
     </div>`;
 }
 
 function wireLangSwitches() {
-  document.querySelectorAll("[data-set-lang]").forEach((button) => {
-    button.addEventListener("click", () => setLang(button.dataset.setLang));
+  document.querySelectorAll("[data-set-lang]").forEach((node) => {
+    node.addEventListener("change", () => setLang(node.value));
   });
 }
 
@@ -1299,6 +1437,8 @@ function openServer(server, deleteMode = false) {
 /* ---------- boot ------------------------------------------------------- */
 
 async function boot() {
+  lang = detectLang();
+  if (!(await ensureLang(lang))) lang = "en";
   applyStaticLang();
   try {
     const data = await api("api/me");

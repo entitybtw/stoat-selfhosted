@@ -176,32 +176,42 @@ h1 {
   flex-shrink: 0;
 }
 
-/* language switcher: segmented text buttons */
+/* language switcher: M3 filled select (compact) */
 .lang-switch {
   display: inline-flex;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--borderRadius-sm);
-  overflow: hidden;
 }
 
-.lang-switch button {
-  background: transparent;
+.lang-switch select,
+.lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--md-sys-color-surface-container-highest);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c6c5d0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 10px 6px;
+  color: var(--md-sys-color-on-surface);
   border: none;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 11px;
+  border-bottom: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--borderRadius-xs) var(--borderRadius-xs) 0 0;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.03125rem;
-  padding: 4px 7px;
+  padding: 5px 24px 5px 8px;
+  max-width: 190px;
   cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
 }
 
-.lang-switch button:hover {
-  color: var(--md-sys-color-on-surface);
+.lang-switch select:focus {
+  border-bottom: 2px solid var(--md-sys-color-primary);
+  padding-bottom: 4px;
 }
 
-.lang-switch button.active {
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
+[dir="rtl"] .lang-switch select {
+  background-position: left 8px center;
+  padding: 5px 8px 5px 24px;
 }
 
 /* Content.tsx: surface-container-low pane, 30px start corners */
@@ -691,28 +701,143 @@ input[readonly] {
     height: auto;
     min-height: 100vh;
   }
+
+  /* sidebar becomes a compact top bar: header, single-line scrollable
+     nav, footer with the language select */
   .sidebar {
     width: 100%;
-    padding: 12px 0;
+    padding: 10px 0 6px;
+    background: var(--md-sys-color-surface);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  }
+  .sidebar-header {
+    padding: 0 14px 8px;
+    font-size: 0.9375rem;
   }
   .sidebar nav {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 8px;
+  }
+  .sidebar nav::-webkit-scrollbar {
+    display: none;
   }
   .nav-item {
     margin-inline-end: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .sidebar-footer {
-    padding-top: 8px;
+    padding: 6px 14px 0;
+    flex-wrap: wrap;
   }
+  .lang-switch select {
+    max-width: 170px;
+  }
+
   .main {
     border-radius: 0;
-    padding: 20px 14px 48px;
+    padding: 16px 12px 56px;
   }
+
+  /* toolbar: search full-width on its own row, actions wrap below */
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .toolbar .search {
+    max-width: none;
+    flex: 1 1 100%;
+  }
+  .toolbar .btn {
+    flex: 0 0 auto;
+  }
+
+  /* tables scroll horizontally instead of crushing columns */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table {
+    min-width: 560px;
+  }
+  .table th,
+  .table td {
+    padding: 10px 12px;
+  }
+
+  .pager {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
   .grid2 {
     grid-template-columns: 1fr;
   }
+
+  /* modals: near-fullscreen with stacked action buttons */
   .overlay {
-    padding: 12px;
+    padding: 10px;
+  }
+  .modal {
+    max-height: 92vh;
+    padding: 20px 16px;
+  }
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .modal-actions .btn {
+    width: 100%;
+    height: 44px;
+  }
+  .kv {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .kv dt {
+    margin-top: 8px;
+    font-size: 12.5px;
+  }
+  .kv dd {
+    margin-bottom: 4px;
+  }
+
+  .login-card {
+    padding: 26px 20px;
+  }
+  .login-card .lang-switch {
+    position: static;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .login-card .lang-switch select {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .toasts {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  /* 16px inputs: prevents iOS Safari auto-zoom on focus */
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  textarea {
+    font-size: 16px;
   }
 }

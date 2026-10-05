@@ -452,6 +452,22 @@ export const setUserProfile = ah(async (req, res) => {
     console.warn(`[events] user fan-out failed: ${err.message}`);
   }
 
+  // Friends and other relations do not share a server topic with this user —
+  // push the new tag to them over their private topics, exactly like the
+  // backend's change_username route (user.relations → .private(id)).
+  if (data.username !== undefined || data.discriminator !== undefined) {
+    try {
+      for (const rel of user.relationships || []) {
+        const other = rel && (rel._id || rel.id);
+        if (other && other !== user._id) {
+          await publishEvent(`${other}!`, { ...event });
+        }
+      }
+    } catch (err) {
+      console.warn(`[events] relation fan-out failed: ${err.message}`);
+    }
+  }
+
   res.json({
     ok: true,
     changed: true,
