@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "沒有變更",
   "err_missing_name": "請輸入新名稱",
   "err_invalid_name": "伺服器名稱：1–32 個字元",
-  "err_invalid_description": "描述：最多 1024 個字元"
+  "err_invalid_description": "描述：最多 1024 個字元",
+  "lang_title": "選擇語言"
 };

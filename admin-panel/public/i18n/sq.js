@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Pa ndryshime",
   "err_missing_name": "Shkruani një emër të ri",
   "err_invalid_name": "Emri i serverit: 1–32 karaktere",
-  "err_invalid_description": "Përshkrimi: më së shumti 1024 karaktere"
+  "err_invalid_description": "Përshkrimi: më së shumti 1024 karaktere",
+  "lang_title": "Zgjidhni gjuhën tuaj"
 };

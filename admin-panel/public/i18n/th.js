@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "ไม่มีการเปลี่ยนแปลง",
   "err_missing_name": "โปรดกรอกชื่อใหม่",
   "err_invalid_name": "ชื่อเซิร์ฟเวอร์: 1–32 ตัวอักษร",
-  "err_invalid_description": "คำอธิบาย: ไม่เกิน 1024 ตัวอักษร"
+  "err_invalid_description": "คำอธิบาย: ไม่เกิน 1024 ตัวอักษร",
+  "lang_title": "เลือกภาษาของคุณ"
 };

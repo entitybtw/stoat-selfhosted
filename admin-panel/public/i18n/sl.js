@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Ni sprememb",
   "err_missing_name": "Vnesite novo ime",
   "err_invalid_name": "Ime strežnika: 1–32 znakov",
-  "err_invalid_description": "Opis: največ 1024 znakov"
+  "err_invalid_description": "Opis: največ 1024 znakov",
+  "lang_title": "Izberite svoj jezik"
 };

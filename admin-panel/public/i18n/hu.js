@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Nincs módosítás",
   "err_missing_name": "Adjon meg új nevet",
   "err_invalid_name": "Szerver neve: 1–32 karakter",
-  "err_invalid_description": "Leírás: legfeljebb 1024 karakter"
+  "err_invalid_description": "Leírás: legfeljebb 1024 karakter",
+  "lang_title": "Válassz nyelvet"
 };

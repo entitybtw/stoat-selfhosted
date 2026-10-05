@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Nav izmaiņu",
   "err_missing_name": "Ievadiet jaunu nosaukumu",
   "err_invalid_name": "Servera nosaukums: 1–32 zīmes",
-  "err_invalid_description": "Apraksts: ne vairāk kā 1024 zīmes"
+  "err_invalid_description": "Apraksts: ne vairāk kā 1024 zīmes",
+  "lang_title": "Izvēlies savu valodu"
 };

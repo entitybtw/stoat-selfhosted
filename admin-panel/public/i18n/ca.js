@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Cap canvi",
   "err_missing_name": "Introdueix un nom nou",
   "err_invalid_name": "Nom del servidor: 1–32 caràcters",
-  "err_invalid_description": "Descripció: com a màxim 1024 caràcters"
+  "err_invalid_description": "Descripció: com a màxim 1024 caràcters",
+  "lang_title": "Seleccioneu la vostra llengua"
 };

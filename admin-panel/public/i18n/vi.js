@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Không có thay đổi",
   "err_missing_name": "Nhập tên mới",
   "err_invalid_name": "Tên máy chủ: 1–32 ký tự",
-  "err_invalid_description": "Mô tả: tối đa 1024 ký tự"
+  "err_invalid_description": "Mô tả: tối đa 1024 ký tự",
+  "lang_title": "Chọn ngôn ngữ của bạn"
 };

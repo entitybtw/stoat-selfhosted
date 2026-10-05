@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "වෙනස්කම් නොමැත",
   "err_missing_name": "නව නමක් ඇතුළත් කරන්න",
   "err_invalid_name": "සේවාදායක නම: අක්ෂර 1–32",
-  "err_invalid_description": "විස්තරය: උපරිම අක්ෂර 1024ක්"
+  "err_invalid_description": "විස්තරය: උපරිම අක්ෂර 1024ක්",
+  "lang_title": "ඔබගේ භාෂාව තෝරන්න"
 };

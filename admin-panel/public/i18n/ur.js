@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "کوئی تبدیلی نہیں",
   "err_missing_name": "نیا نام درج کریں",
   "err_invalid_name": "سرور کا نام: 1–32 حروف",
-  "err_invalid_description": "تفصیل: زیادہ سے زیادہ 1024 حروف"
+  "err_invalid_description": "تفصیل: زیادہ سے زیادہ 1024 حروف",
+  "lang_title": "Select your language"
 };

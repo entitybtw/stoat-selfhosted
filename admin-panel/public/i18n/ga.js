@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Níl aon athruithe",
   "err_missing_name": "Cuir ainm nua isteach",
   "err_invalid_name": "Ainm an fhreastalaí: 1–32 carachtar",
-  "err_invalid_description": "Cur síos: 1024 carachtar ar a mhéid"
+  "err_invalid_description": "Cur síos: 1024 carachtar ar a mhéid",
+  "lang_title": "Roghnaigh do theanga"
 };

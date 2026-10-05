@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Žádné změny",
   "err_missing_name": "Zadejte nový název",
   "err_invalid_name": "Název serveru: 1–32 znaky",
-  "err_invalid_description": "Popis: nejvýše 1024 znaky"
+  "err_invalid_description": "Popis: nejvýše 1024 znaky",
+  "lang_title": "Vybrat jazyk"
 };

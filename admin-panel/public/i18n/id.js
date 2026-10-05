@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Tidak ada perubahan",
   "err_missing_name": "Masukkan nama baru",
   "err_invalid_name": "Nama server: 1–32 karakter",
-  "err_invalid_description": "Deskripsi: maksimal 1024 karakter"
+  "err_invalid_description": "Deskripsi: maksimal 1024 karakter",
+  "lang_title": "Pilih bahasa kamu"
 };

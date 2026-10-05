@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Nicio modificare",
   "err_missing_name": "Introduceți un nume nou",
   "err_invalid_name": "Nume server: 1–32 de caractere",
-  "err_invalid_description": "Descriere: cel mult 1024 de caractere"
+  "err_invalid_description": "Descriere: cel mult 1024 de caractere",
+  "lang_title": "Selectează limba ta"
 };

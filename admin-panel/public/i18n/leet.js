@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "N0 ch4ng35",
   "err_missing_name": "3n73r 4 n3w n4m3",
   "err_invalid_name": "53rv3r n4m3: 1–32 ch4r4c73r5",
-  "err_invalid_description": "D35cr1p710n: 47 m057 1024 ch4r4c73r5"
+  "err_invalid_description": "D35cr1p710n: 47 m057 1024 ch4r4c73r5",
+  "lang_title": "53L3C7 Y0U2 L4N6U463"
 };

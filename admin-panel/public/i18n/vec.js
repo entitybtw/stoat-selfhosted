@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Nissuna modìfica",
   "err_missing_name": "Missa un novo nome",
   "err_invalid_name": "Nome del server: 1–32 caràtari",
-  "err_invalid_description": "Descrission: al massimo 1024 caràtari"
+  "err_invalid_description": "Descrission: al massimo 1024 caràtari",
+  "lang_title": "Scièlde ła to łéngua"
 };

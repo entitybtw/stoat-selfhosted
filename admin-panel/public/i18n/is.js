@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Engar breytingar",
   "err_missing_name": "Sláðu inn nýtt nafn",
   "err_invalid_name": "Nafn þjóns: 1–32 stafir",
-  "err_invalid_description": "Lýsing: að mesta 1024 stafir"
+  "err_invalid_description": "Lýsing: að mesta 1024 stafir",
+  "lang_title": "Select your language"
 };

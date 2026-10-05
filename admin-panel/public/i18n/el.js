@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Καμία αλλαγή",
   "err_missing_name": "Εισαγάγετε νέο όνομα",
   "err_invalid_name": "Όνομα διακομιστή: 1–32 χαρακτήρες",
-  "err_invalid_description": "Περιγραφή: το πολύ 1024 χαρακτήρες"
+  "err_invalid_description": "Περιγραφή: το πολύ 1024 χαρακτήρες",
+  "lang_title": "Διάλεξε τη γλώσσα σου"
 };

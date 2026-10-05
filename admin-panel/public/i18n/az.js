@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Dəyişiklik yoxdur",
   "err_missing_name": "Yeni ad daxil edin",
   "err_invalid_name": "Server adı: 1–32 simvol",
-  "err_invalid_description": "Təsvir: ən çox 1024 simvol"
+  "err_invalid_description": "Təsvir: ən çox 1024 simvol",
+  "lang_title": "Dilinizi seçin"
 };

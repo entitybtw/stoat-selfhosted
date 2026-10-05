@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Neniu ŝanĝo",
   "err_missing_name": "Enigu novan nomon",
   "err_invalid_name": "Nomo de servilo: 1–32 signoj",
-  "err_invalid_description": "Priskribo: maximume 1024 signoj"
+  "err_invalid_description": "Priskribo: maximume 1024 signoj",
+  "lang_title": "Elektu vian lingvon"
 };

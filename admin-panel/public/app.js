@@ -162,6 +162,7 @@ const I18N = {
     err_missing_name: "Укажите новое название",
     err_invalid_name: "Название сервера: 1–32 символа",
     err_invalid_description: "Описание: не более 1024 символов",
+    lang_title: "Выберите язык",
   },
   en: {
     doc_title: "Stoat — Admin panel",
@@ -317,6 +318,7 @@ const I18N = {
     err_missing_name: "Enter a new name",
     err_invalid_name: "Server name: 1–32 characters",
     err_invalid_description: "Description: at most 1024 characters",
+    lang_title: "Select your language",
   },
 };
 
@@ -326,30 +328,30 @@ const I18N = {
 const LANGS = [
   { code: "en", display: "English (Traditional)", emoji: "🇬🇧" },
   { code: "en-US", display: "English (Simplified)", emoji: "🇺🇸" },
-  { code: "ar", display: "عربي", emoji: "🇸🇦", rtl: true },
+  { code: "ar", display: "عربي", emoji: "🇸🇦", rtl: true, verified: true },
   { code: "as", display: "অসমীয়া", emoji: "🇮🇳" },
   { code: "az", display: "Azərbaycan dili", emoji: "🇦🇿" },
   { code: "be", display: "Беларуская", emoji: "🇧🇾" },
   { code: "bg", display: "Български", emoji: "🇧🇬" },
   { code: "bn", display: "বাংলা", emoji: "🇧🇩" },
-  { code: "br", display: "Brezhoneg" },
+  { code: "br", display: "Brezhoneg", verified: true },
   { code: "ca", display: "Català", emoji: "🇪🇸" },
   { code: "ceb", display: "Bisaya", emoji: "🇵🇭" },
   { code: "ckb", display: "کوردی", rtl: true },
   { code: "cs", display: "Čeština", emoji: "🇨🇿" },
   { code: "da", display: "Dansk", emoji: "🇩🇰" },
-  { code: "de", display: "Deutsch", emoji: "🇩🇪" },
+  { code: "de", display: "Deutsch", emoji: "🇩🇪", verified: true },
   { code: "el", display: "Ελληνικά", emoji: "🇬🇷" },
   { code: "es", display: "Español", emoji: "🇪🇸" },
   { code: "es-419", display: "Español (América Latina)", emoji: "🇪🇸" },
-  { code: "et", display: "eesti", emoji: "🇪🇪" },
+  { code: "et", display: "eesti", emoji: "🇪🇪", verified: true },
   { code: "fi", display: "suomi", emoji: "🇫🇮" },
   { code: "fil", display: "Filipino", emoji: "🇵🇭" },
-  { code: "fr", display: "Français", emoji: "🇫🇷" },
+  { code: "fr", display: "Français", emoji: "🇫🇷", verified: true },
   { code: "ga", display: "Gaeilge", emoji: "🇮🇪" },
   { code: "hi", display: "हिन्दी", emoji: "🇮🇳" },
   { code: "hr", display: "Hrvatski", emoji: "🇭🇷" },
-  { code: "hu", display: "Magyar", emoji: "🇭🇺" },
+  { code: "hu", display: "Magyar", emoji: "🇭🇺", verified: true },
   { code: "hy", display: "հայերեն", emoji: "🇦🇲" },
   { code: "id", display: "Bahasa Indonesia", emoji: "🇮🇩" },
   { code: "is", display: "Íslenska", emoji: "🇮🇸" },
@@ -358,28 +360,28 @@ const LANGS = [
   { code: "ko", display: "한국어", emoji: "🇰🇷" },
   { code: "lb", display: "Lëtzebuergesch", emoji: "🇱🇺" },
   { code: "lt", display: "Lietuvių", emoji: "🇱🇹" },
-  { code: "lv", display: "Latviešu", emoji: "🇱🇻" },
+  { code: "lv", display: "Latviešu", emoji: "🇱🇻", verified: true },
   { code: "mk", display: "Македонски", emoji: "🇲🇰" },
   { code: "ms", display: "Bahasa Melayu", emoji: "🇲🇾" },
   { code: "nb-NO", display: "Norsk bokmål", emoji: "🇳🇴" },
   { code: "nl", display: "Nederlands", emoji: "🇳🇱" },
-  { code: "fa", display: "فارسی", emoji: "🇮🇷", rtl: true },
+  { code: "fa", display: "فارسی", emoji: "🇮🇷", rtl: true, verified: true },
   { code: "pl", display: "Polski", emoji: "🇵🇱" },
   { code: "pt-BR", display: "Português (do Brasil)", emoji: "🇧🇷" },
   { code: "pt-PT", display: "Português (Portugal)", emoji: "🇵🇹" },
   { code: "ro", display: "Română", emoji: "🇷🇴" },
-  { code: "ru", display: "Русский", emoji: "🇷🇺" },
+  { code: "ru", display: "Русский", emoji: "🇷🇺", verified: true },
   { code: "sk", display: "Slovensky", emoji: "🇸🇰" },
   { code: "sl", display: "Slovenščina", emoji: "🇸🇮" },
   { code: "sq", display: "Shqip", emoji: "🇦🇱" },
   { code: "sr", display: "Српски", emoji: "🇷🇸" },
   { code: "si", display: "සිංහල", emoji: "🇱🇰" },
-  { code: "sv", display: "Svenska", emoji: "🇸🇪" },
+  { code: "sv", display: "Svenska", emoji: "🇸🇪", verified: true },
   { code: "ta", display: "தமிழ்", emoji: "🇮🇳" },
   { code: "th", display: "ไทย", emoji: "🇹🇭" },
   { code: "tr", display: "Türkçe", emoji: "🇹🇷" },
   { code: "ur", display: "اردو", emoji: "🇵🇰", rtl: true },
-  { code: "uk", display: "Українська", emoji: "🇺🇦" },
+  { code: "uk", display: "Українська", emoji: "🇺🇦", verified: true },
   { code: "vec", display: "Vèneto" },
   { code: "vi", display: "Tiếng Việt", emoji: "🇻🇳" },
   { code: "zh-Hans", display: "简体中文", emoji: "🇨🇳" },
@@ -397,14 +399,7 @@ const LANGS = [
 
 const LANG_BY_CODE = new Map(LANGS.map((entry) => [entry.code, entry]));
 
-function detectLang() {
-  try {
-    const saved = localStorage.getItem("stoat_admin_lang");
-    if (saved && LANG_BY_CODE.has(saved)) return saved;
-  } catch {
-    /* storage unavailable */
-  }
-
+function browserPreferredLang() {
   const nav = (navigator.language || "en").toLowerCase();
 
   /* exact code match, case-insensitive (pt-pt → pt-PT, nb-no → nb-NO …) */
@@ -436,6 +431,20 @@ function detectLang() {
   if (partial) return partial.code;
   return "en";
 }
+
+function detectLang() {
+  try {
+    const saved = localStorage.getItem("stoat_admin_lang");
+    if (saved && LANG_BY_CODE.has(saved)) return saved;
+  } catch {
+    /* storage unavailable */
+  }
+  return browserPreferredLang();
+}
+
+/* The language the browser asks for: the picker pins it to the top of the
+   list, exactly like the Stoat settings language list does. */
+const PREFERRED = browserPreferredLang();
 
 let lang = detectLang();
 /* Guards against overlapping language switches (double change while the
@@ -477,25 +486,41 @@ function applyStaticLang() {
   document.title = t("doc_title");
 }
 
+/* Reflect a language choice in every switch on the page (optimistic on
+   click, revert on a failed module load). */
+function paintLangChoice(code) {
+  const entry = LANG_BY_CODE.get(code);
+  document.querySelectorAll("[data-set-lang]").forEach((wrap) => {
+    wrap.querySelectorAll("[data-lang]").forEach((opt) => {
+      const on = opt.getAttribute("data-lang") === code;
+      opt.setAttribute("aria-selected", on ? "true" : "false");
+      opt.classList.toggle("is-selected", on);
+    });
+    const desc = wrap.querySelector(".cat-desc");
+    if (desc && entry) desc.textContent = entry.display;
+  });
+}
+
 async function setLang(next) {
   if (next === lang || !LANG_BY_CODE.has(next) || langBusy) return;
   langBusy = true;
-  /* Disable the control while the module loads so a second change cannot
-     race the first one. */
-  const selects = Array.from(document.querySelectorAll("[data-set-lang]"));
-  selects.forEach((node) => {
+  /* Optimistic selection, then disable every control of the switch while the
+     module loads so a second change cannot race the first one. */
+  paintLangChoice(next);
+  const controls = Array.from(
+    document.querySelectorAll("[data-set-lang] button"),
+  );
+  controls.forEach((node) => {
     node.disabled = true;
   });
   const ok = await ensureLang(next);
-  selects.forEach((node) => {
+  controls.forEach((node) => {
     node.disabled = false;
   });
   langBusy = false;
   if (!ok) {
     /* Module missing — put every switch back on the working language. */
-    selects.forEach((node) => {
-      node.value = lang;
-    });
+    paintLangChoice(lang);
     toast(t("load_error"));
     return;
   }
@@ -518,7 +543,7 @@ function retranslate() {
   const active = document.activeElement;
   const focusId = active && active.id ? active.id : null;
   const focusLang = Boolean(
-    active && active.matches && active.matches("[data-set-lang]"),
+    active && active.closest && active.closest("[data-set-lang]"),
   );
   let caret = null;
   if (active && typeof active.selectionStart === "number") {
@@ -543,8 +568,10 @@ function retranslate() {
     if (node) node.value = typed[id];
   });
   if (focusLang) {
-    const select = document.querySelector("[data-set-lang]");
-    if (select) select.focus();
+    const trigger = document.querySelector(
+      "[data-set-lang] [data-set-lang-trigger]",
+    );
+    if (trigger) trigger.focus();
   } else if (focusId) {
     const node = document.getElementById(focusId);
     if (node) {
@@ -681,26 +708,137 @@ function closeOverlays() {
   document.querySelectorAll(".overlay").forEach((node) => node.remove());
 }
 
+/* ---------- language switcher (Stoat settings: CategoryButton.Select) ---- */
+
+/* Material Symbols used by the Stoat settings language picker. */
+const ICON_LANG = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>`;
+const ICON_CHEVRON = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>`;
+const ICON_VERIFIED = `<svg class="cat-badge" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M23,12l-2.44-2.79l0.34-3.69l-3.61-0.82L15.4,1.5L12,2.96L8.6,1.5L6.71,4.69L3.1,5.5L3.44,9.2L1,12l2.44,2.79l-0.34,3.7 l3.61,0.82L8.6,22.5l3.4-1.47l3.4,1.46l1.89-3.19l3.61-0.82l-0.34-3.69L23,12z M10.09,16.72l-3.8-3.81l1.48-1.48l2.32,2.33 l5.85-5.87l1.48,1.48L10.09,16.72z"/></svg>`;
+
+/* Same cap the Stoat select uses, clamped to the viewport so the list can
+   never grow out of the sidebar (it expands upwards into the free space). */
+const LANG_LIST_MAX = 340;
+
+/* The browser's preferred language goes first, exactly like the Stoat
+   settings language list. */
+function langOrder() {
+  const idx = LANGS.findIndex((entry) => entry.code === PREFERRED);
+  if (idx <= 0) return LANGS;
+  return [LANGS[idx], ...LANGS.slice(0, idx), ...LANGS.slice(idx + 1)];
+}
+
 function langSwitchHTML() {
-  const options = LANGS.map((entry) => {
-    const label = (entry.emoji ? `${entry.emoji} ` : "") + entry.display;
-    return `<option value="${esc(entry.code)}"${
-      entry.code === lang ? " selected" : ""
-    }>${esc(label)}</option>`;
-  }).join("");
+  const current = LANG_BY_CODE.get(lang) || LANGS[0];
+  const title = t("lang_title");
+  const options = langOrder()
+    .map((entry) => {
+      const on = entry.code === lang;
+      const glyph = entry.emoji
+        ? esc(entry.emoji)
+        : `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>`;
+      const badge = entry.verified ? ICON_VERIFIED : "";
+      return `
+        <button type="button" class="cat-btn cat-opt${
+          on ? " is-selected" : ""
+        }" role="option" aria-selected="${on}" data-lang="${esc(entry.code)}">
+          <span class="cat-icon"><span class="cat-emoji">${glyph}</span></span>
+          <span class="cat-content">
+            <span class="cat-text"><span class="cat-label">${esc(
+              entry.display,
+            )}</span>${badge}</span>
+          </span>
+          <span class="cat-action"><span class="cat-radio"></span></span>
+        </button>`;
+    })
+    .join("");
+
   return `
-    <div class="lang-switch">
-      <select class="lang-select" data-set-lang>${options}</select>
+    <div class="lang-switch" data-set-lang>
+      <button type="button" class="cat-btn cat-tonal cat-trigger"
+              data-set-lang-trigger aria-haspopup="listbox" aria-expanded="false">
+        <span class="cat-icon">${ICON_LANG}</span>
+        <span class="cat-content">
+          <span class="cat-text"><span class="cat-label">${esc(
+            title,
+          )}</span></span>
+          <span class="cat-desc">${esc(current.display)}</span>
+        </span>
+        <span class="cat-action">${ICON_CHEVRON}</span>
+      </button>
+      <div class="lang-options" role="listbox" aria-label="${esc(
+        title,
+      )}">${options}
+      </div>
     </div>`;
 }
 
+function langListHeight(panel) {
+  const room = Math.max(
+    140,
+    Math.min(LANG_LIST_MAX, window.innerHeight - 300),
+  );
+  return Math.min(panel.scrollHeight, room);
+}
+
+function openLangSwitch(wrap) {
+  const panel = wrap.querySelector(".lang-options");
+  const trigger = wrap.querySelector("[data-set-lang-trigger]");
+  if (!panel) return;
+  wrap.classList.add("open");
+  if (trigger) trigger.setAttribute("aria-expanded", "true");
+  const content = panel.scrollHeight;
+  const height = langListHeight(panel);
+  panel.style.height = `${height}px`;
+  /* Long lists open scrolled to the current language, like Stoat does. */
+  if (content > height) {
+    const sel = panel.querySelector('[aria-selected="true"]');
+    if (sel) {
+      panel.scrollTop = Math.max(
+        0,
+        sel.offsetTop - (panel.clientHeight - sel.offsetHeight) / 2,
+      );
+    }
+  }
+}
+
+function closeLangSwitch(wrap) {
+  const panel = wrap.querySelector(".lang-options");
+  const trigger = wrap.querySelector("[data-set-lang-trigger]");
+  wrap.classList.remove("open");
+  if (trigger) trigger.setAttribute("aria-expanded", "false");
+  if (panel) {
+    panel.style.height = "0px";
+    panel.scrollTop = 0;
+  }
+}
+
+function toggleLangSwitch(wrap) {
+  if (wrap.classList.contains("open")) closeLangSwitch(wrap);
+  else openLangSwitch(wrap);
+}
+
+/* Clicking anywhere else — or pressing Esc — collapses every open list. */
+function closeOpenLangSwitches(except) {
+  document.querySelectorAll(".lang-switch.open").forEach((wrap) => {
+    if (wrap !== except) closeLangSwitch(wrap);
+  });
+}
+
 function wireLangSwitches() {
-  document.querySelectorAll("[data-set-lang]").forEach((node) => {
-    node.addEventListener("change", () => setLang(node.value));
+  document.querySelectorAll("[data-set-lang]").forEach((wrap) => {
+    const trigger = wrap.querySelector("[data-set-lang-trigger]");
+    if (!trigger) return;
+    trigger.addEventListener("click", () => toggleLangSwitch(wrap));
+    wrap.querySelectorAll("[data-lang]").forEach((opt) => {
+      opt.addEventListener("click", () => {
+        closeLangSwitch(wrap);
+        setLang(opt.getAttribute("data-lang"));
+      });
+    });
     /* Warm the translation modules the moment the control is pointed at or
        focused, so the first switch is instant. */
-    node.addEventListener("pointerenter", prefetchLangs, { once: true });
-    node.addEventListener("focus", prefetchLangs, { once: true });
+    wrap.addEventListener("pointerenter", prefetchLangs, { once: true });
+    wrap.addEventListener("focusin", prefetchLangs, { once: true });
   });
 }
 
@@ -823,14 +961,16 @@ function renderShell() {
           <button class="nav-item ${state.view === "users" ? "active" : ""}" data-view="users">${esc(t("nav_users"))}</button>
           <button class="nav-item ${state.view === "servers" ? "active" : ""}" data-view="servers">${esc(t("nav_servers"))}</button>
         </nav>
-        <div class="sidebar-footer">
-          <span class="who" title="${esc(state.me.username)}#${esc(state.me.discriminator)}">
-            ${esc(state.me.username)}<span class="dim">#${esc(state.me.discriminator)}</span>
-          </span>
-          <span class="footer-actions">
-            ${langSwitchHTML()}
-            <button class="btn flat small" id="logout">${esc(t("logout"))}</button>
-          </span>
+        <div class="sidebar-bottom">
+          <div class="sidebar-lang">${langSwitchHTML()}</div>
+          <div class="sidebar-footer">
+            <span class="who" title="${esc(state.me.username)}#${esc(state.me.discriminator)}">
+              ${esc(state.me.username)}<span class="dim">#${esc(state.me.discriminator)}</span>
+            </span>
+            <span class="footer-actions">
+              <button class="btn flat small" id="logout">${esc(t("logout"))}</button>
+            </span>
+          </div>
         </div>
       </aside>
       <main class="main" id="main"></main>
@@ -1599,6 +1739,25 @@ async function boot() {
   lang = detectLang();
   if (!(await ensureLang(lang))) lang = "en";
   applyStaticLang();
+
+  /* Language picker: clicking anywhere else (or Esc) collapses an open list
+     and the open list keeps its height in sync with the viewport. */
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    const inside =
+      target && target.closest ? target.closest(".lang-switch") : null;
+    closeOpenLangSwitches(inside);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeOpenLangSwitches(null);
+  });
+  window.addEventListener("resize", () => {
+    document.querySelectorAll(".lang-switch.open").forEach((wrap) => {
+      const panel = wrap.querySelector(".lang-options");
+      if (panel) panel.style.height = `${langListHeight(panel)}px`;
+    });
+  });
+
   try {
     const data = await api("api/me");
     state.me = data.user;

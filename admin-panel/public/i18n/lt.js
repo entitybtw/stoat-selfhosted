@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Pakeitimų nėra",
   "err_missing_name": "Įveskite naują pavadinimą",
   "err_invalid_name": "Serverio pavadinimas: 1–32 ženklai",
-  "err_invalid_description": "Aprašas: ne daugiau kaip 1024 ženklai"
+  "err_invalid_description": "Aprašas: ne daugiau kaip 1024 ženklai",
+  "lang_title": "Pasirinkite kalbą"
 };

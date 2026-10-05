@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Nessuna modifica",
   "err_missing_name": "Inserisci un nuovo nome",
   "err_invalid_name": "Nome del server: 1–32 caratteri",
-  "err_invalid_description": "Descrizione: al massimo 1024 caratteri"
+  "err_invalid_description": "Descrizione: al massimo 1024 caratteri",
+  "lang_title": "Seleziona la tua lingua"
 };

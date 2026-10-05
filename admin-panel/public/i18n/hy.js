@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Փոփոխություններ չկան",
   "err_missing_name": "Մուտքագրեք նոր անուն",
   "err_invalid_name": "Սերվերի անուն. 1–32 նիշ",
-  "err_invalid_description": "Նկարագրություն. առավելագույնը 1024 նիշ"
+  "err_invalid_description": "Նկարագրություն. առավելագույնը 1024 նիշ",
+  "lang_title": "Ընտրեք ձեր լեզուն"
 };

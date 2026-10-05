@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "কোনো পৰিৱৰ্তন নাই",
   "err_missing_name": "নতুন নাম লিখক",
   "err_invalid_name": "চাৰ্ভাৰৰ নাম: ১–৩২ আখৰ",
-  "err_invalid_description": "বিৱৰণ: সৰ্বাধিক ১০২৪ আখৰ"
+  "err_invalid_description": "বিৱৰণ: সৰ্বাধিক ১০২৪ আখৰ",
+  "lang_title": "Select your language"
 };

@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Nothing changed",
   "err_missing_name": "Give a new name",
   "err_invalid_name": "Ship name: 1–32 letters",
-  "err_invalid_description": "Tale: 1024 letters at most"
+  "err_invalid_description": "Tale: 1024 letters at most",
+  "lang_title": "Select yer language"
 };

@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Inga ändringar",
   "err_missing_name": "Ange ett nytt namn",
   "err_invalid_name": "Servernamn: 1–32 tecken",
-  "err_invalid_description": "Beskrivning: högst 1024 tecken"
+  "err_invalid_description": "Beskrivning: högst 1024 tecken",
+  "lang_title": "Välj ditt språk"
 };

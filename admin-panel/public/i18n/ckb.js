@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "هیچ گۆڕانکارییەک نییە",
   "err_missing_name": "ناوی نوێ بنووسە",
   "err_invalid_name": "ناوی سێرڤەر: 1–32 پیت",
-  "err_invalid_description": "ڕوونکردنەوە: زۆر بە 1024 پیت"
+  "err_invalid_description": "ڕوونکردنەوە: زۆر بە 1024 پیت",
+  "lang_title": "زمانەکەت دیاری بکە"
 };

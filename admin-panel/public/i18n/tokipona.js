@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "ala ante",
   "err_missing_name": "o tuluta nimi sin",
   "err_invalid_name": "nimi ilo: ijo 1–32",
-  "err_invalid_description": "toki: ijo 1024"
+  "err_invalid_description": "toki: ijo 1024",
+  "lang_title": "toki wile li seme"
 };

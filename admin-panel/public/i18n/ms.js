@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Tiada perubahan",
   "err_missing_name": "Masukkan nama baharu",
   "err_invalid_name": "Nama pelayan: 1–32 aksara",
-  "err_invalid_description": "Penerangan: maksimum 1024 aksara"
+  "err_invalid_description": "Penerangan: maksimum 1024 aksara",
+  "lang_title": "Pilih bahasa anda"
 };

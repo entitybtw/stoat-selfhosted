@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "कोई बदलाव नहीं",
   "err_missing_name": "नया नाम दर्ज करें",
   "err_invalid_name": "सर्वर का नाम: 1–32 वर्ण",
-  "err_invalid_description": "विवरण: अधिकतम 1024 वर्ण"
+  "err_invalid_description": "विवरण: अधिकतम 1024 वर्ण",
+  "lang_title": "अपनी भाषा का चयन करें"
 };

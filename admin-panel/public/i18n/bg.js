@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Няма промени",
   "err_missing_name": "Въведете ново име",
   "err_invalid_name": "Име на сървър: 1–32 знака",
-  "err_invalid_description": "Описание: до 1024 знака"
+  "err_invalid_description": "Описание: до 1024 знака",
+  "lang_title": "Изберете езика си"
 };

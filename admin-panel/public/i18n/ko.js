@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "변경 사항 없음",
   "err_missing_name": "새 이름을 입력하세요",
   "err_invalid_name": "서버 이름: 1–32자",
-  "err_invalid_description": "설명: 최대 1024자"
+  "err_invalid_description": "설명: 최대 1024자",
+  "lang_title": "언어 선택"
 };

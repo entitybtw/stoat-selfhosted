@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Muudatusi pole",
   "err_missing_name": "Sisesta uus nimi",
   "err_invalid_name": "Serveri nimi: 1–32 märki",
-  "err_invalid_description": "Kirjeldus: kuni 1024 märki"
+  "err_invalid_description": "Kirjeldus: kuni 1024 märki",
+  "lang_title": "Valige oma keel"
 };

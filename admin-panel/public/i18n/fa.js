@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "تغییری وجود ندارد",
   "err_missing_name": "نام جدید را وارد کنید",
   "err_invalid_name": "نام سرور: ۱ تا ۳۲ نویسه",
-  "err_invalid_description": "توضیحات: حداکثر ۱۰۲۴ نویسه"
+  "err_invalid_description": "توضیحات: حداکثر ۱۰۲۴ نویسه",
+  "lang_title": "زبان خود را انتخاب کنید"
 };

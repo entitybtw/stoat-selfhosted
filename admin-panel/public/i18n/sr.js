@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Нема измена",
   "err_missing_name": "Унесите нови назив",
   "err_invalid_name": "Назив сервера: 1–32 знака",
-  "err_invalid_description": "Опис: највише 1024 знака"
+  "err_invalid_description": "Опис: највише 1024 знака",
+  "lang_title": "Изаберите ваш језик"
 };

@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "N'eus kemm ebet",
   "err_missing_name": "Lakait un anv nevez",
   "err_invalid_name": "Anv ar servijer: 1–32 arouezenn",
-  "err_invalid_description": "Deskrivadur: 1024 arouezenn da vezañ"
+  "err_invalid_description": "Deskrivadur: 1024 arouezenn da vezañ",
+  "lang_title": "Dibab ho yezh"
 };

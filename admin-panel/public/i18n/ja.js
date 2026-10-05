@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "変更はありません",
   "err_missing_name": "新しい名前を入力してください",
   "err_invalid_name": "サーバー名: 1〜32 文字",
-  "err_invalid_description": "説明: 最大 1024 文字"
+  "err_invalid_description": "説明: 最大 1024 文字",
+  "lang_title": "言語の選択"
 };

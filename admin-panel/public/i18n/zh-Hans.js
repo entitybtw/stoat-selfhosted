@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "没有变更",
   "err_missing_name": "请输入新名称",
   "err_invalid_name": "服务器名称：1–32 个字符",
-  "err_invalid_description": "描述：最多 1024 个字符"
+  "err_invalid_description": "描述：最多 1024 个字符",
+  "lang_title": "选择语言"
 };

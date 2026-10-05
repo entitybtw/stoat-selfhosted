@@ -23,6 +23,11 @@
   --md-sys-color-on-primary-container: #dde1ff;
   --md-sys-color-secondary-container: #424659;
   --md-sys-color-on-secondary-container: #dfe1f9;
+  /* tonal spot (dark) tertiary role — generated from the same #5470ec seed */
+  --md-sys-color-tertiary: #e5bad8;
+  --md-sys-color-on-tertiary: #44263e;
+  --md-sys-color-tertiary-container: #5c3c55;
+  --md-sys-color-on-tertiary-container: #ffd7f3;
   --md-sys-color-error: #ffb4ab;
   --md-sys-color-on-error: #690005;
   --md-sys-color-error-container: #93000a;
@@ -35,6 +40,12 @@
   --borderRadius-lg: 16px;
   --borderRadius-li: 20px;
   --borderRadius-xl: 28px;
+  --borderRadius-full: calc(infinity * 1px);
+
+  /* spacing scale (stoatWebTheme.ts) */
+  --gap-xs: 2px;
+  --gap-sm: 4px;
+  --gap-md: 8px;
 
   /* presence */
   --online: #3abf7e;
@@ -110,6 +121,8 @@ h1 {
   display: flex;
   flex-direction: column;
   padding: 20px 0 12px;
+  position: relative;
+  z-index: 25;
 }
 
 .sidebar-header {
@@ -152,9 +165,23 @@ h1 {
   background: var(--md-sys-color-primary-container);
 }
 
-.sidebar-footer {
+/* switcher sits above the account row and is pushed to the bottom of the
+   sidebar; opening its list never moves the surrounding layout */
+.sidebar-bottom {
   margin-top: auto;
-  padding: 12px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sidebar-lang {
+  padding: 12px 8px 0;
+  min-width: 0;
+}
+
+.sidebar-footer {
+  padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -176,42 +203,249 @@ h1 {
   flex-shrink: 0;
 }
 
-/* language switcher: M3 filled select (compact) */
+/* ---------- language switcher: Stoat settings CategoryButton.Select ------ */
+
 .lang-switch {
-  display: inline-flex;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.lang-switch select,
-.lang-select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-color: var(--md-sys-color-surface-container-highest);
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c6c5d0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 10px 6px;
-  color: var(--md-sys-color-on-surface);
+/* Base.tsx: 13px padding / 16px gap / radius-md; M3 state layer in place of
+   the client's <Ripple /> */
+.cat-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 13px;
   border: none;
-  border-bottom: 1px solid var(--md-sys-color-outline);
-  border-radius: var(--borderRadius-xs) var(--borderRadius-xs) 0 0;
-  font-size: 12px;
+  background: transparent;
+  color: var(--color);
+  fill: var(--color);
+  font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.03125rem;
-  padding: 5px 24px 5px 8px;
-  max-width: 190px;
+  line-height: 1.3;
+  text-align: start;
+  user-select: none;
   cursor: pointer;
-  outline: none;
-  transition: border-color 0.15s ease;
+  transition: background-color 0.1s ease-in-out;
 }
 
-.lang-switch select:focus {
-  border-bottom: 2px solid var(--md-sys-color-primary);
-  padding-bottom: 4px;
+.cat-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }
 
-[dir="rtl"] .lang-switch select {
-  background-position: left 8px center;
-  padding: 5px 8px 5px 24px;
+.cat-btn:hover::after {
+  opacity: 0.08;
+}
+
+.cat-btn:active::after {
+  opacity: 0.12;
+}
+
+.cat-btn:disabled {
+  cursor: default;
+}
+
+/* Group.tsx clips the collapsed card to radius-xl; opened, only its top
+   corners stay clipped (the column takes over below it). */
+.cat-trigger {
+  border-radius: var(--borderRadius-xl);
+}
+
+.lang-switch.open .cat-trigger {
+  border-start-start-radius: var(--borderRadius-xl);
+  border-start-end-radius: var(--borderRadius-xl);
+  border-end-start-radius: var(--borderRadius-md);
+  border-end-end-radius: var(--borderRadius-md);
+  margin-bottom: var(--gap-xs);
+}
+
+.cat-tonal {
+  background: var(--md-sys-color-secondary-container);
+  --color: var(--md-sys-color-on-secondary-container);
+}
+
+.cat-opt {
+  background: var(--md-sys-color-tertiary-container);
+  --color: var(--md-sys-color-on-tertiary-container);
+}
+
+.cat-opt.is-selected {
+  background: var(--md-sys-color-tertiary);
+  --color: var(--md-sys-color-on-tertiary);
+}
+
+.cat-opt:last-child {
+  border-end-start-radius: var(--borderRadius-xl);
+  border-end-end-radius: var(--borderRadius-xl);
+}
+
+/* IconWrapper.tsx: 36px circle on surface-dim */
+.cat-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--borderRadius-full);
+  background: var(--md-sys-color-surface-dim);
+  fill: var(--md-sys-color-on-surface);
+  overflow: hidden;
+}
+
+.cat-icon svg {
+  display: block;
+}
+
+.cat-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Content.tsx: 14/500 title over the 12px "label" description, one line */
+.cat-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.cat-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cat-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-desc {
+  font-size: 12px;
+  line-height: 1rem;
+  letter-spacing: 0.03125rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-badge {
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+/* Action.tsx: 24px action cell; the collapse icon rotates when opened */
+.cat-action {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.cat-action svg {
+  transition: transform 0.3s;
+}
+
+.lang-switch.open .cat-trigger .cat-action svg {
+  transform: rotate(180deg);
+}
+
+/* M3 radio: 20px ring, 2px stroke, 10px dot */
+.cat-radio {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--md-sys-color-on-surface-variant);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.cat-radio::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.cat-opt.is-selected .cat-radio {
+  border-color: var(--color);
+}
+
+.cat-opt.is-selected .cat-radio::after {
+  background: var(--color);
+}
+
+/* InnerColumn.tsx: height-animated column, scrollbar hidden, collapsed state
+   is invisible AND out of the tab order */
+.lang-options .cat-btn:focus-visible {
+  outline-offset: -3px;
+}
+
+.lang-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+  height: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: var(--borderRadius-md);
+  transition:
+    height 0.3s ease,
+    opacity 0.3s ease,
+    visibility 0s linear 0.3s;
+  scrollbar-width: none;
+}
+
+.lang-options::-webkit-scrollbar {
+  display: none;
+}
+
+.lang-switch.open .lang-options {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition:
+    height 0.3s ease,
+    opacity 0.3s ease,
+    visibility 0s linear 0s;
+}
+
+/* Sidebar: the list overlays the content instead of stretching the 248px
+   channel sidebar, and opens upwards (the switcher sits at the bottom). */
+.sidebar-lang .lang-switch.open .cat-trigger {
+  margin-bottom: 0;
+}
+
+.sidebar-lang .lang-options {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  inset-inline-start: 0;
+  width: min(300px, calc(100vw - 24px));
+  z-index: 30;
+  background: var(--md-sys-color-surface);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
 }
 
 /* Content.tsx: surface-container-low pane, 30px start corners */
@@ -551,9 +785,8 @@ input[readonly] {
 }
 
 .login-card .lang-switch {
-  position: absolute;
-  top: 16px;
-  right: 16px;
+  width: 100%;
+  margin-bottom: 16px;
 }
 
 .login-card .btn {
@@ -739,12 +972,50 @@ input[readonly] {
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .sidebar-footer {
+  .sidebar-bottom {
+    margin-top: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
     padding: 6px 14px 0;
+  }
+  .sidebar-lang {
+    flex: 0 1 auto;
+    padding: 0;
+  }
+  .sidebar-footer {
+    flex: 1 1 150px;
+    padding: 0;
     flex-wrap: wrap;
   }
-  .lang-switch select {
-    max-width: 170px;
+
+  /* compact trigger in the top bar: globe + current language only */
+  .sidebar-lang .cat-trigger {
+    padding: 8px;
+    gap: 12px;
+  }
+  .sidebar-lang .cat-trigger .cat-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .sidebar-lang .cat-trigger .cat-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  .sidebar-lang .cat-trigger .cat-text {
+    display: none;
+  }
+  .sidebar-lang .cat-trigger .cat-desc {
+    font-size: 13.5px;
+    line-height: 1.2;
+    letter-spacing: normal;
+  }
+
+  /* the list hangs below the sticky bar instead of above it */
+  .sidebar-lang .lang-options {
+    top: calc(100% + 4px);
+    bottom: auto;
   }
 
   .main {
@@ -824,13 +1095,7 @@ input[readonly] {
     padding: 26px 20px;
   }
   .login-card .lang-switch {
-    position: static;
-    display: block;
-    margin-bottom: 4px;
-  }
-  .login-card .lang-switch select {
-    max-width: 100%;
-    width: 100%;
+    margin-bottom: 12px;
   }
 
   .toasts {

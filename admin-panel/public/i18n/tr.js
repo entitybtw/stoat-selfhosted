@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Değişiklik yok",
   "err_missing_name": "Yeni bir ad girin",
   "err_invalid_name": "Sunucu adı: 1–32 karakter",
-  "err_invalid_description": "Açıklama: en fazla 1024 karakter"
+  "err_invalid_description": "Açıklama: en fazla 1024 karakter",
+  "lang_title": "Dilinizi seçin"
 };

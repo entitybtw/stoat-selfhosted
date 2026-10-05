@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "No changes",
   "err_missing_name": "Entew a new name",
   "err_invalid_name": "Sewvew name: 1–32 chawactews",
-  "err_invalid_description": "Descwiption: at most 1024 chawactews"
+  "err_invalid_description": "Descwiption: at most 1024 chawactews",
+  "lang_title": "Syelect langwuage"
 };

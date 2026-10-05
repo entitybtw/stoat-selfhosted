@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "மாற்றங்கள் எதுவும் இல்லை",
   "err_missing_name": "புதிய பெயரை உள்ளிடவும்",
   "err_invalid_name": "சேவையகத்தின் பெயர்: 1–32 எழுத்துகள்",
-  "err_invalid_description": "விளக்கம்: அதிகபட்சம் 1024 எழுத்துகள்"
+  "err_invalid_description": "விளக்கம்: அதிகபட்சம் 1024 எழுத்துகள்",
+  "lang_title": "உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்"
 };

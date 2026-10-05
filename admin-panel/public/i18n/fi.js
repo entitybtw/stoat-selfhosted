@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Ei muutoksia",
   "err_missing_name": "Anna uusi nimi",
   "err_invalid_name": "Palvelimen nimi: 1–32 merkkiä",
-  "err_invalid_description": "Kuvaus: enintään 1024 merkkiä"
+  "err_invalid_description": "Kuvaus: enintään 1024 merkkiä",
+  "lang_title": "Valitse kieli"
 };

@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Onay angeschay",
   "err_missing_name": "Enterway away ewnay amenay",
   "err_invalid_name": "Erversay amenay: 1–32 aracterschay",
-  "err_invalid_description": "Escriptionday: atway ostmay 1024 aracterschay"
+  "err_invalid_description": "Escriptionday: atway ostmay 1024 aracterschay",
+  "lang_title": "Electsay yourway anguagelay"
 };

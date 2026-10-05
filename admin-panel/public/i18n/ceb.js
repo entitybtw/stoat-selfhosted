@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Walay kausaban",
   "err_missing_name": "Ibutang ang bag-ong ngalan",
   "err_invalid_name": "Ngalan sa server: 1–32 nga karakter",
-  "err_invalid_description": "Deskripsiyon: dili sobra sa 1024 nga karakter"
+  "err_invalid_description": "Deskripsiyon: dili sobra sa 1024 nga karakter",
+  "lang_title": "Select your language"
 };

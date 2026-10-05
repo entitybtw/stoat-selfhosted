@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Nema promjena",
   "err_missing_name": "Unesite novi naziv",
   "err_invalid_name": "Naziv poslužitelja: 1–32 znaka",
-  "err_invalid_description": "Opis: najviše 1024 znaka"
+  "err_invalid_description": "Opis: najviše 1024 znaka",
+  "lang_title": "Odaberi jezik"
 };

@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "لا توجد تغييرات",
   "err_missing_name": "أدخل اسمًا جديدًا",
   "err_invalid_name": "اسم الخادم: 1–32 حرفًا",
-  "err_invalid_description": "الوصف: 1024 حرفًا كحد أقصى"
+  "err_invalid_description": "الوصف: 1024 حرفًا كحد أقصى",
+  "lang_title": "اختر اللغة"
 };

@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Geen wijzigingen",
   "err_missing_name": "Voer een nieuwe naam in",
   "err_invalid_name": "Servernaam: 1–32 tekens",
-  "err_invalid_description": "Beschrijving: maximaal 1024 tekens"
+  "err_invalid_description": "Beschrijving: maximaal 1024 tekens",
+  "lang_title": "Selecteer je taal"
 };

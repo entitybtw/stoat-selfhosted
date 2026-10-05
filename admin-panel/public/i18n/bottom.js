@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "no changes >///<",
   "err_missing_name": "enter a new name",
   "err_invalid_name": "server name: 1–32 characters",
-  "err_invalid_description": "description: at most 1024 characters"
+  "err_invalid_description": "description: at most 1024 characters",
+  "lang_title": "💖✨✨✨,,,👉👈💖💖,👉👈💖💖🥺,,,👉👈💖💖,👉👈💖✨✨✨✨🥺,,,,👉👈💖💖✨🥺,👉👈✨✨✨,,👉👈💖💖✨✨,👉👈💖💖✨,👉👈💖💖✨🥺,,👉👈💖💖✨,,,,👉👈✨✨✨,,👉👈💖💖🥺,,,👉👈💖✨✨✨✨🥺,,👉👈💖💖✨👉👈💖💖,,,👉👈💖💖✨🥺,,👉👈💖✨✨✨✨🥺,,👉👈💖💖,,,👉👈💖💖,👉👈"
 };

@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Keng Ännerungen",
   "err_missing_name": "Gitt en neien Numm an",
   "err_invalid_name": "Servernumm: 1–32 Zeechen",
-  "err_invalid_description": "Beschreiwung: maximal 1024 Zeechen"
+  "err_invalid_description": "Beschreiwung: maximal 1024 Zeechen",
+  "lang_title": "Wielt Är Sprooch"
 };

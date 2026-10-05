@@ -138,4 +138,5 @@ export default {
   "err_missing_name": "Enter a new name",
   "err_invalid_name": "Server name: 1–32 characters",
   "err_invalid_description": "Description: at most 1024 characters",
+  "lang_title": "ᓭᒷꖎᒷᓵℸ ||𝙹⚍∷ ꖎᔑリ⊣⚍ᔑ⊣ᒷ"
 };

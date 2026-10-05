@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "কোনো পরিবর্তন নেই",
   "err_missing_name": "নতুন নাম লিখুন",
   "err_invalid_name": "সার্ভারের নাম: ১–৩২ অক্ষর",
-  "err_invalid_description": "বিবরণ: সর্বোচ্চ ১০২৪ অক্ষর"
+  "err_invalid_description": "বিবরণ: সর্বোচ্চ ১০২৪ অক্ষর",
+  "lang_title": "আপনার ভাষা নির্বাচন করুন"
 };

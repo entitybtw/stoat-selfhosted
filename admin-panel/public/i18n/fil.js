@@ -137,5 +137,6 @@ export default {
   "err_nothing_to_update": "Walang pagbabago",
   "err_missing_name": "Ilagay ang bagong pangalan",
   "err_invalid_name": "Pangalan ng server: 1–32 character",
-  "err_invalid_description": "Paglalarawan: hanggang 1024 character"
+  "err_invalid_description": "Paglalarawan: hanggang 1024 character",
+  "lang_title": "Piliin ang iyong wika"
 };
