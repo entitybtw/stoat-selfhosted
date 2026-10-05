@@ -175,7 +175,7 @@ example stays universal — the tags move together whenever a release is pushed.
 The same release is also published under a pinned version (`v0.0.10`,
 `v0.0.10-api`, …, `v0.0.10-web`); swap any `latest-*` tag for its pinned
 counterpart when you want a reproducible deploy. The admin panel is versioned
-on its own and published as `v0.0.3` alongside `latest`.
+on its own and published as `v0.0.4` alongside `latest`.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
 fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.

@@ -229,6 +229,12 @@ h1 {
   max-width: 1080px;
 }
 
+/* Keyboard-only focus ring (buttons/inputs set outline:none otherwise). */
+:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
 /* ---------- cards ---------- */
 
 .cards {

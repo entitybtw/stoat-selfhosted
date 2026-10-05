@@ -457,7 +457,11 @@ export const setUserProfile = ah(async (req, res) => {
   // backend's change_username route (user.relations → .private(id)).
   if (data.username !== undefined || data.discriminator !== undefined) {
     try {
-      for (const rel of user.relationships || []) {
+      // The canonical field in the users collection is `relations`
+      // (Relationship { _id, status }); `relationships` is tolerated only
+      // for old/foreign documents — otherwise the fan-out silently no-ops.
+      const relations = user.relations || user.relationships || [];
+      for (const rel of relations) {
         const other = rel && (rel._id || rel.id);
         if (other && other !== user._id) {
           await publishEvent(`${other}!`, { ...event });

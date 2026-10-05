@@ -438,6 +438,9 @@ function detectLang() {
 }
 
 let lang = detectLang();
+/* Guards against overlapping language switches (double change while the
+   translation module is still being imported). */
+let langBusy = false;
 
 /* Lazily import a translation module (en/ru are already embedded). */
 async function ensureLang(code) {
@@ -475,8 +478,24 @@ function applyStaticLang() {
 }
 
 async function setLang(next) {
-  if (next === lang || !LANG_BY_CODE.has(next)) return;
-  if (!(await ensureLang(next))) {
+  if (next === lang || !LANG_BY_CODE.has(next) || langBusy) return;
+  langBusy = true;
+  /* Disable the control while the module loads so a second change cannot
+     race the first one. */
+  const selects = Array.from(document.querySelectorAll("[data-set-lang]"));
+  selects.forEach((node) => {
+    node.disabled = true;
+  });
+  const ok = await ensureLang(next);
+  selects.forEach((node) => {
+    node.disabled = false;
+  });
+  langBusy = false;
+  if (!ok) {
+    /* Module missing — put every switch back on the working language. */
+    selects.forEach((node) => {
+      node.value = lang;
+    });
     toast(t("load_error"));
     return;
   }
@@ -487,7 +506,58 @@ async function setLang(next) {
     /* storage unavailable */
   }
   applyStaticLang();
+  retranslate();
+}
+
+/* Repaint the whole UI in the new language without losing the user's place:
+   scroll offset, focused control (+ caret), typed-but-uncommitted search
+   text and the login form values all survive the repaint. */
+function retranslate() {
+  const main = document.getElementById("main");
+  const scroll = main ? main.scrollTop : 0;
+  const active = document.activeElement;
+  const focusId = active && active.id ? active.id : null;
+  const focusLang = Boolean(
+    active && active.matches && active.matches("[data-set-lang]"),
+  );
+  let caret = null;
+  if (active && typeof active.selectionStart === "number") {
+    try {
+      caret = [active.selectionStart, active.selectionEnd];
+    } catch {
+      caret = null;
+    }
+  }
+  const typed = {};
+  ["users-q", "servers-q", "f-login", "f-password"].forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) typed[id] = node.value;
+  });
+
   render();
+
+  const mainNow = document.getElementById("main");
+  if (mainNow) mainNow.scrollTop = scroll;
+  Object.keys(typed).forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.value = typed[id];
+  });
+  if (focusLang) {
+    const select = document.querySelector("[data-set-lang]");
+    if (select) select.focus();
+  } else if (focusId) {
+    const node = document.getElementById(focusId);
+    if (node) {
+      node.focus();
+      if (caret && typeof node.setSelectionRange === "function") {
+        try {
+          node.setSelectionRange(caret[0], caret[1]);
+        } catch {
+          /* inputs without a caret */
+        }
+      }
+    }
+  }
 }
 
 function locale() {
@@ -507,6 +577,12 @@ const state = {
   view: "stats",
   users: { q: "", page: 1 },
   servers: { q: "", page: 1 },
+  /* Last successful payload per view, keyed by the query it belongs to.
+     A re-render (language switch, nav click) repaints from here instantly
+     and refreshes in the background, so the UI never flashes "loading". */
+  cache: { stats: null, users: null, usersKey: "", servers: null, serversKey: "" },
+  /* Draft of the login form — survives re-renders (e.g. language switch). */
+  login: { login: "", password: "" },
 };
 
 const app = document.getElementById("app");
@@ -621,7 +697,36 @@ function langSwitchHTML() {
 function wireLangSwitches() {
   document.querySelectorAll("[data-set-lang]").forEach((node) => {
     node.addEventListener("change", () => setLang(node.value));
+    /* Warm the translation modules the moment the control is pointed at or
+       focused, so the first switch is instant. */
+    node.addEventListener("pointerenter", prefetchLangs, { once: true });
+    node.addEventListener("focus", prefetchLangs, { once: true });
   });
+}
+
+/* Import every i18n module once, a few at a time, so switching languages
+   never waits for the network again. */
+let prefetchStarted = false;
+function prefetchLangs() {
+  if (prefetchStarted) return;
+  prefetchStarted = true;
+  const queue = LANGS.map((entry) => entry.code).filter((code) => !I18N[code]);
+  let index = 0;
+  const worker = async () => {
+    while (index < queue.length) {
+      await ensureLang(queue[index++]);
+    }
+  };
+  for (let i = 0; i < 4; i += 1) worker();
+}
+
+/* Start warming after the first paint, when the browser is idle. */
+function scheduleLangPrefetch() {
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => prefetchLangs(), { timeout: 6000 });
+  } else {
+    setTimeout(() => prefetchLangs(), 2500);
+  }
 }
 
 /* Esc closes the topmost dialog (canonical Stoat behaviour). */
@@ -652,11 +757,13 @@ function renderLogin() {
         <div class="subtitle">${esc(t("login_subtitle"))}</div>
         <div class="field">
           <label>${esc(t("login_field"))}</label>
-          <input type="text" id="f-login" autocomplete="username" required />
+          <input type="text" id="f-login" autocomplete="username"
+            value="${esc(state.login.login)}" required />
         </div>
         <div class="field">
           <label>${esc(t("password_field"))}</label>
-          <input type="password" id="f-password" autocomplete="current-password" required />
+          <input type="password" id="f-password" autocomplete="current-password"
+            value="${esc(state.login.password)}" required />
         </div>
         <div class="hint" id="f-hint"></div>
         <button class="btn primary" id="f-submit" type="submit">${esc(t("login"))}</button>
@@ -665,10 +772,18 @@ function renderLogin() {
 
   wireLangSwitches();
 
+  ["f-login", "f-password"].forEach((id) => {
+    document.getElementById(id).addEventListener("input", (event) => {
+      state.login[id === "f-login" ? "login" : "password"] = event.target.value;
+    });
+  });
+
   document.getElementById("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const loginValue = document.getElementById("f-login").value;
     const passwordValue = document.getElementById("f-password").value;
+    state.login.login = loginValue;
+    state.login.password = passwordValue;
     const hint = document.getElementById("f-hint");
     const button = document.getElementById("f-submit");
     if (hint) hint.textContent = "";
@@ -682,6 +797,7 @@ function renderLogin() {
         body: { login: loginValue, password: passwordValue },
       });
       state.me = data.user;
+      state.login.password = ""; // never keep the password in memory after login
       render();
     } catch (err) {
       const hintAfter = document.getElementById("f-hint");
@@ -766,32 +882,40 @@ async function renderStats() {
         .join("")}
     </div>`;
 
+  const hadCache = Boolean(state.cache.stats);
+  if (hadCache) paintStats(state.cache.stats);
+
   try {
     const stats = await api("api/stats");
     if (seq !== viewSeq) return;
-    const cards = document.getElementById("stats-cards");
-    if (!cards) return;
-    const entries = [
-      ["users", t("stat_users")],
-      ["servers", t("stat_servers")],
-      ["channels", t("stat_channels")],
-      ["messages", t("stat_messages")],
-      ["sessions", t("stat_sessions")],
-      ["accounts", t("stat_accounts")],
-    ];
-    cards.innerHTML = entries
-      .map(
-        ([key, label]) => `
-        <div class="card">
-          <div class="num">${esc(fmtNum(stats[key] || 0))}</div>
-          <div class="label">${esc(label)}</div>
-        </div>`,
-      )
-      .join("");
+    state.cache.stats = stats;
+    paintStats(stats);
   } catch (err) {
     if (seq !== viewSeq) return;
     toast(errText(err), true);
   }
+}
+
+function paintStats(stats) {
+  const cards = document.getElementById("stats-cards");
+  if (!cards) return;
+  const entries = [
+    ["users", t("stat_users")],
+    ["servers", t("stat_servers")],
+    ["channels", t("stat_channels")],
+    ["messages", t("stat_messages")],
+    ["sessions", t("stat_sessions")],
+    ["accounts", t("stat_accounts")],
+  ];
+  cards.innerHTML = entries
+    .map(
+      ([key, label]) => `
+      <div class="card">
+        <div class="num">${esc(fmtNum(stats[key] || 0))}</div>
+        <div class="label">${esc(label)}</div>
+      </div>`,
+    )
+    .join("");
 }
 
 /* ---------- users ------------------------------------------------------ */
@@ -836,6 +960,9 @@ function renderUsers() {
     clearTimeout(timer);
     timer = setTimeout(submit, 300);
   });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") submit();
+  });
   document.getElementById("users-go").addEventListener("click", submit);
 
   loadUsers();
@@ -845,55 +972,69 @@ async function loadUsers() {
   const seq = bump();
   const body = document.getElementById("users-body");
   if (!body) return;
-  body.innerHTML = `<tr><td colspan="6" class="empty">${esc(t("loading"))}</td></tr>`;
+  const key = `${state.users.q}|${state.users.page}`;
+  /* Repaint from cache for this exact query when we have it; otherwise keep
+     the rows already on screen (stale-while-revalidate) instead of flashing
+     a "loading" row on every keystroke or language switch. */
+  const cached =
+    state.cache.users && state.cache.usersKey === key ? state.cache.users : null;
+  if (cached) paintUsers(cached);
+  else if (!body.querySelector("tr[data-id]")) {
+    body.innerHTML = `<tr><td colspan="6" class="empty">${esc(t("loading"))}</td></tr>`;
+  }
   try {
     const data = await api(
       `api/users?q=${encodeURIComponent(state.users.q)}&page=${state.users.page}`,
     );
     if (seq !== viewSeq) return;
-
-    const total = document.getElementById("users-total");
-    if (total) total.textContent = t("total", { n: fmtNum(data.total) });
-
-    const bodyNow = document.getElementById("users-body");
-    if (!bodyNow) return;
-    bodyNow.innerHTML = data.items.length
-      ? data.items
-          .map(
-            (user) => `
-        <tr data-id="${esc(user.id)}">
-          <td>
-            <div class="strong">${esc(user.username)}<span class="dim">#${esc(user.discriminator)}</span></div>
-            <div class="dim mono">${esc(user.id)}</div>
-          </td>
-          <td>${esc(user.email || "—")}</td>
-          <td>${user.privileged ? `<span class="badge admin">${esc(t("badge_admin"))}</span>` : `<span class="dim">${esc(t("role_user"))}</span>`}</td>
-          <td>${user.disabled ? `<span class="badge off">${esc(t("badge_disabled"))}</span>` : `<span class="badge ok">${esc(t("badge_active"))}</span>`}</td>
-          <td>${esc(fmtNum(user.sessions))}</td>
-          <td>${esc(fmtDate(user.createdAt))}</td>
-        </tr>`,
-          )
-          .join("")
-      : `<tr><td colspan="6" class="empty">${esc(t("empty"))}</td></tr>`;
-
-    bodyNow.querySelectorAll("tr[data-id]").forEach((row) => {
-      row.addEventListener("click", () => openUser(row.dataset.id));
-    });
-
-    const pager = document.getElementById("users-pager");
-    if (pager) {
-      renderPager(pager, data, (page) => {
-        state.users.page = page;
-        loadUsers();
-      });
-    }
+    state.cache.users = data;
+    state.cache.usersKey = key;
+    paintUsers(data);
   } catch (err) {
     if (seq !== viewSeq) return;
     toast(errText(err), true);
     const bodyNow = document.getElementById("users-body");
-    if (bodyNow) {
+    if (bodyNow && !bodyNow.querySelector("tr[data-id]")) {
       bodyNow.innerHTML = `<tr><td colspan="6" class="empty">${esc(t("load_error"))}</td></tr>`;
     }
+  }
+}
+
+function paintUsers(data) {
+  const total = document.getElementById("users-total");
+  if (total) total.textContent = t("total", { n: fmtNum(data.total) });
+
+  const body = document.getElementById("users-body");
+  if (!body) return;
+  body.innerHTML = data.items.length
+    ? data.items
+        .map(
+          (user) => `
+      <tr data-id="${esc(user.id)}">
+        <td>
+          <div class="strong">${esc(user.username)}<span class="dim">#${esc(user.discriminator)}</span></div>
+          <div class="dim mono">${esc(user.id)}</div>
+        </td>
+        <td>${esc(user.email || "—")}</td>
+        <td>${user.privileged ? `<span class="badge admin">${esc(t("badge_admin"))}</span>` : `<span class="dim">${esc(t("role_user"))}</span>`}</td>
+        <td>${user.disabled ? `<span class="badge off">${esc(t("badge_disabled"))}</span>` : `<span class="badge ok">${esc(t("badge_active"))}</span>`}</td>
+        <td>${esc(fmtNum(user.sessions))}</td>
+        <td>${esc(fmtDate(user.createdAt))}</td>
+      </tr>`,
+        )
+        .join("")
+    : `<tr><td colspan="6" class="empty">${esc(t("empty"))}</td></tr>`;
+
+  body.querySelectorAll("tr[data-id]").forEach((row) => {
+    row.addEventListener("click", () => openUser(row.dataset.id));
+  });
+
+  const pager = document.getElementById("users-pager");
+  if (pager) {
+    renderPager(pager, data, (page) => {
+      state.users.page = page;
+      loadUsers();
+    });
   }
 }
 
@@ -984,7 +1125,7 @@ function userModalHTML(user) {
           <div class="field">
             <label>${esc(t("f_discriminator"))}</label>
             <div class="row">
-              <input type="text" id="m-discriminator" value="${esc(user.discriminator)}" maxlength="4" />
+              <input type="text" id="m-discriminator" value="${esc(user.discriminator)}" maxlength="4" inputmode="numeric" />
               <button class="btn outlined" id="m-reroll" type="button">${esc(t("auto"))}</button>
             </div>
           </div>
@@ -1017,7 +1158,7 @@ function userModalHTML(user) {
         <div class="field">
           <label>${esc(t("f_password_new"))}</label>
           <div class="row">
-            <input type="text" id="m-password" placeholder="${esc(t("f_password_ph"))}" autocomplete="new-password" />
+            <input type="password" id="m-password" placeholder="${esc(t("f_password_ph"))}" autocomplete="new-password" />
             <button class="btn tonal" id="m-setpw" type="button">${esc(t("change"))}</button>
           </div>
           <div class="hint" id="m-pw-hint"></div>
@@ -1083,8 +1224,10 @@ function wireUserModal(overlay, user) {
       });
       if (result.changed) toast(t("t_profile_saved"));
       else toast(t("t_profile_unchanged"));
-      if (state.view === "users") loadUsers();
+      /* Refresh the modal first — openUser bumps the view generation, so a
+         list reload started before it would be discarded as stale. */
       await openUser(user.id); // refresh with fresh data
+      if (state.view === "users") loadUsers();
     } catch (err) {
       const hintNow = overlay.querySelector("#m-profile-hint");
       if (hintNow) hintNow.textContent = errText(err);
@@ -1105,8 +1248,8 @@ function wireUserModal(overlay, user) {
         body: { email: overlay.querySelector("#m-email").value.trim() },
       });
       toast(t("t_email_saved"));
-      if (state.view === "users") loadUsers();
       await openUser(user.id);
+      if (state.view === "users") loadUsers();
     } catch (err) {
       const hintNow = overlay.querySelector("#m-email-hint");
       if (hintNow) hintNow.textContent = errText(err);
@@ -1133,8 +1276,8 @@ function wireUserModal(overlay, user) {
         body: { password },
       });
       toast(t("t_password_changed", { n: result.sessionsDeleted }));
-      if (state.view === "users") loadUsers();
       await openUser(user.id);
+      if (state.view === "users") loadUsers();
     } catch (err) {
       const hintNow = overlay.querySelector("#m-pw-hint");
       if (hintNow) hintNow.textContent = errText(err);
@@ -1154,8 +1297,8 @@ function wireUserModal(overlay, user) {
         body: { privileged: next },
       });
       toast(next ? t("t_priv_on") : t("t_priv_off"));
-      if (state.view === "users") loadUsers();
       await openUser(user.id);
+      if (state.view === "users") loadUsers();
     } catch (err) {
       toast(errText(err), true);
     }
@@ -1178,8 +1321,8 @@ function wireUserModal(overlay, user) {
           ? t("t_disabled", { n: result.sessionsDeleted ?? 0 })
           : t("t_enabled"),
       );
-      if (state.view === "users") loadUsers();
       await openUser(user.id);
+      if (state.view === "users") loadUsers();
     } catch (err) {
       toast(errText(err), true);
     }
@@ -1227,6 +1370,9 @@ function renderServers() {
     clearTimeout(timer);
     timer = setTimeout(submit, 300);
   });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") submit();
+  });
   document.getElementById("servers-go").addEventListener("click", submit);
 
   loadServers();
@@ -1236,65 +1382,78 @@ async function loadServers() {
   const seq = bump();
   const body = document.getElementById("servers-body");
   if (!body) return;
-  body.innerHTML = `<tr><td colspan="6" class="empty">${esc(t("loading"))}</td></tr>`;
+  const key = `${state.servers.q}|${state.servers.page}`;
+  const cached =
+    state.cache.servers && state.cache.serversKey === key
+      ? state.cache.servers
+      : null;
+  if (cached) paintServers(cached);
+  else if (!body.querySelector("tr[data-id]")) {
+    body.innerHTML = `<tr><td colspan="6" class="empty">${esc(t("loading"))}</td></tr>`;
+  }
   try {
     const data = await api(
       `api/servers?q=${encodeURIComponent(state.servers.q)}&page=${state.servers.page}`,
     );
     if (seq !== viewSeq) return;
-
-    const total = document.getElementById("servers-total");
-    if (total) total.textContent = t("total", { n: fmtNum(data.total) });
-
-    const bodyNow = document.getElementById("servers-body");
-    if (!bodyNow) return;
-    bodyNow.innerHTML = data.items.length
-      ? data.items
-          .map(
-            (server) => `
-        <tr data-id="${esc(server.id)}">
-          <td>
-            <div class="strong">${esc(server.name)}</div>
-            <div class="dim mono">${esc(server.id)}</div>
-          </td>
-          <td>${esc(server.ownerTag || server.owner)}</td>
-          <td>${esc(fmtNum(server.channels))}</td>
-          <td>${esc(fmtNum(server.members))}</td>
-          <td>${esc(fmtDate(server.createdAt))}</td>
-          <td><button class="btn danger small" data-delete="${esc(server.id)}">${esc(t("delete"))}</button></td>
-        </tr>`,
-          )
-          .join("")
-      : `<tr><td colspan="6" class="empty">${esc(t("empty"))}</td></tr>`;
-
-    bodyNow.querySelectorAll("tr[data-id]").forEach((row) => {
-      row.addEventListener("click", (event) => {
-        if (event.target.closest("[data-delete]")) return;
-        const server = data.items.find((item) => item.id === row.dataset.id);
-        openServer(server);
-      });
-    });
-    bodyNow.querySelectorAll("[data-delete]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const server = data.items.find((item) => item.id === button.dataset.delete);
-        openServer(server, true);
-      });
-    });
-
-    const pager = document.getElementById("servers-pager");
-    if (pager) {
-      renderPager(pager, data, (page) => {
-        state.servers.page = page;
-        loadServers();
-      });
-    }
+    state.cache.servers = data;
+    state.cache.serversKey = key;
+    paintServers(data);
   } catch (err) {
     if (seq !== viewSeq) return;
     toast(errText(err), true);
     const bodyNow = document.getElementById("servers-body");
-    if (bodyNow) {
+    if (bodyNow && !bodyNow.querySelector("tr[data-id]")) {
       bodyNow.innerHTML = `<tr><td colspan="6" class="empty">${esc(t("load_error"))}</td></tr>`;
     }
+  }
+}
+
+function paintServers(data) {
+  const total = document.getElementById("servers-total");
+  if (total) total.textContent = t("total", { n: fmtNum(data.total) });
+
+  const body = document.getElementById("servers-body");
+  if (!body) return;
+  body.innerHTML = data.items.length
+    ? data.items
+        .map(
+          (server) => `
+      <tr data-id="${esc(server.id)}">
+        <td>
+          <div class="strong">${esc(server.name)}</div>
+          <div class="dim mono">${esc(server.id)}</div>
+        </td>
+        <td>${esc(server.ownerTag || server.owner)}</td>
+        <td>${esc(fmtNum(server.channels))}</td>
+        <td>${esc(fmtNum(server.members))}</td>
+        <td>${esc(fmtDate(server.createdAt))}</td>
+        <td><button class="btn danger small" data-delete="${esc(server.id)}">${esc(t("delete"))}</button></td>
+      </tr>`,
+        )
+        .join("")
+    : `<tr><td colspan="6" class="empty">${esc(t("empty"))}</td></tr>`;
+
+  body.querySelectorAll("tr[data-id]").forEach((row) => {
+    row.addEventListener("click", (event) => {
+      if (event.target.closest("[data-delete]")) return;
+      const server = data.items.find((item) => item.id === row.dataset.id);
+      openServer(server);
+    });
+  });
+  body.querySelectorAll("[data-delete]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const server = data.items.find((item) => item.id === button.dataset.delete);
+      openServer(server, true);
+    });
+  });
+
+  const pager = document.getElementById("servers-pager");
+  if (pager) {
+    renderPager(pager, data, (page) => {
+      state.servers.page = page;
+      loadServers();
+    });
   }
 }
 
@@ -1447,6 +1606,7 @@ async function boot() {
     state.me = null;
   }
   render();
+  scheduleLangPrefetch();
 }
 
 boot();
