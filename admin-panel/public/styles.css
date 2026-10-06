@@ -137,11 +137,11 @@ h1 {
   padding: 0 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
-/* SidebarButton.tsx: padding 6/8, radius 8, weight 500, size 15,
-   selected → primary-container, transition 0.1s */
+/* SidebarButton.tsx: padding 9/12 → a 39px row on the panel's 20px text
+   grid, radius 8, weight 500, size 15, selected → primary-container. */
 .nav-item {
   text-align: left;
   background: transparent;
@@ -149,11 +149,10 @@ h1 {
   color: var(--md-sys-color-on-surface);
   font-size: 15px;
   font-weight: 500;
-  padding: 6px 8px;
+  padding: 9px 12px;
   border-radius: var(--borderRadius-sm);
   cursor: pointer;
   user-select: none;
-  margin-inline-end: 12px;
   transition: background-color 0.1s ease-in-out;
 }
 
@@ -176,12 +175,14 @@ h1 {
 }
 
 .sidebar-lang {
-  padding: 12px 8px 0;
+  padding: 14px 8px 0;
   min-width: 0;
 }
 
+/* text starts on the 20px grid (like the header/footer), the account pill
+   ends flush with the nav pills */
 .sidebar-footer {
-  padding: 0 20px;
+  padding: 4px 8px 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -219,6 +220,10 @@ h1 {
   align-items: center;
   gap: 16px;
   width: 100%;
+  /* Without this the button's automatic minimum size is its own nowrap
+     content, so a long language name would push the card past the sidebar
+     instead of ellipsising. */
+  min-width: 0;
   padding: 13px;
   border: none;
   background: transparent;
@@ -360,7 +365,8 @@ h1 {
 }
 
 .cat-action svg {
-  transition: transform 0.3s;
+  /* M3 emphasized easing, matching the list it opens */
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .lang-switch.open .cat-trigger .cat-action svg {
@@ -410,7 +416,7 @@ h1 {
   overflow: hidden;
   border-radius: var(--borderRadius-md);
   transition:
-    height 0.3s ease,
+    height 0.3s cubic-bezier(0.2, 0, 0, 1),
     opacity 0.3s ease,
     visibility 0s linear 0.3s;
   scrollbar-width: none;
@@ -427,13 +433,21 @@ h1 {
   overflow-y: auto;
   overflow-x: hidden;
   transition:
-    height 0.3s ease,
+    height 0.3s cubic-bezier(0.2, 0, 0, 1),
     opacity 0.3s ease,
     visibility 0s linear 0s;
 }
 
 /* Sidebar: the list overlays the content instead of stretching the 248px
-   channel sidebar, and opens upwards (the switcher sits at the bottom). */
+   channel sidebar, and opens upwards (the switcher sits at the bottom).
+   The rail is narrower than the settings card, so its rows tighten to a
+   12px gutter — that keeps the icon on the same 20px column as the header,
+   the nav labels and the account name below. */
+.sidebar-lang .cat-btn {
+  padding: 13px 12px;
+  gap: 12px;
+}
+
 .sidebar-lang .lang-switch.open .cat-trigger {
   margin-bottom: 0;
 }
@@ -717,6 +731,17 @@ input[readonly] {
   cursor: default;
 }
 
+/* an empty/loading row is not clickable, so it must not light up on hover */
+.table tbody tr:has(.empty):hover td {
+  background: transparent;
+}
+
+/* rows are focusable (Enter/Space opens them); the wrapper clips, so the
+   ring is drawn inside the row instead of around it */
+.table tbody tr:focus-visible {
+  outline-offset: -2px;
+}
+
 /* ---------- badges (chips) ---------- */
 
 .badge {
@@ -968,7 +993,6 @@ input[readonly] {
     display: none;
   }
   .nav-item {
-    margin-inline-end: 0;
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -978,7 +1002,7 @@ input[readonly] {
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    padding: 6px 14px 0;
+    padding: 6px 8px 0;
   }
   .sidebar-lang {
     flex: 0 1 auto;
@@ -986,13 +1010,13 @@ input[readonly] {
   }
   .sidebar-footer {
     flex: 1 1 150px;
-    padding: 0;
+    padding: 0 0 0 12px;
     flex-wrap: wrap;
   }
 
   /* compact trigger in the top bar: globe + current language only */
   .sidebar-lang .cat-trigger {
-    padding: 8px;
+    padding: 8px 12px;
     gap: 12px;
   }
   .sidebar-lang .cat-trigger .cat-icon {

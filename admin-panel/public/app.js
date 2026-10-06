@@ -719,6 +719,16 @@ const ICON_VERIFIED = `<svg class="cat-badge" viewBox="0 0 24 24" width="18" hei
    never grow out of the sidebar (it expands upwards into the free space). */
 const LANG_LIST_MAX = 340;
 
+/* Keys the open list treats as "move the focus between the options". */
+const LANG_LIST_KEYS = [
+  "ArrowDown",
+  "ArrowUp",
+  "PageDown",
+  "PageUp",
+  "Home",
+  "End",
+];
+
 /* The browser's preferred language goes first, exactly like the Stoat
    settings language list. */
 function langOrder() {
@@ -780,7 +790,7 @@ function langListHeight(panel) {
   return Math.min(panel.scrollHeight, room);
 }
 
-function openLangSwitch(wrap) {
+function openLangSwitch(wrap, focusOption) {
   const panel = wrap.querySelector(".lang-options");
   const trigger = wrap.querySelector("[data-set-lang-trigger]");
   if (!panel) return;
@@ -790,15 +800,17 @@ function openLangSwitch(wrap) {
   const height = langListHeight(panel);
   panel.style.height = `${height}px`;
   /* Long lists open scrolled to the current language, like Stoat does. */
-  if (content > height) {
-    const sel = panel.querySelector('[aria-selected="true"]');
-    if (sel) {
-      panel.scrollTop = Math.max(
-        0,
-        sel.offsetTop - (panel.clientHeight - sel.offsetHeight) / 2,
-      );
-    }
+  const sel = panel.querySelector('[aria-selected="true"]');
+  if (content > height && sel) {
+    panel.scrollTop = Math.max(
+      0,
+      sel.offsetTop - (panel.clientHeight - sel.offsetHeight) / 2,
+    );
   }
+  /* Opening with the keyboard puts focus on the current option (listbox
+     pattern); a click leaves it on the trigger so the pointer user is not
+     moved around. preventScroll keeps the centering we just computed. */
+  if (focusOption && sel) sel.focus({ preventScroll: true });
 }
 
 function closeLangSwitch(wrap) {
@@ -832,8 +844,56 @@ function wireLangSwitches() {
     wrap.querySelectorAll("[data-lang]").forEach((opt) => {
       opt.addEventListener("click", () => {
         closeLangSwitch(wrap);
+        /* The list disappears from under the pointer, so hand focus back to
+           the trigger instead of dropping it on <body>. */
+        const home = wrap.querySelector("[data-set-lang-trigger]");
+        if (home) home.focus();
         setLang(opt.getAttribute("data-lang"));
       });
+    });
+    /* A listbox must answer the arrow keys: they open a closed list on the
+       current language, then move the focus between the options. */
+    wrap.addEventListener("keydown", (event) => {
+      if (!LANG_LIST_KEYS.includes(event.key)) return;
+      if (!wrap.classList.contains("open")) {
+        event.preventDefault();
+        openLangSwitch(wrap, true);
+        return;
+      }
+      const opts = Array.from(wrap.querySelectorAll("[data-lang]"));
+      if (!opts.length) return;
+      let index = opts.indexOf(document.activeElement);
+      if (index < 0) {
+        /* Focus still sits on the trigger: land on the selected language.
+           Home / End jump straight to the ends instead. */
+        index =
+          event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? opts.length - 1
+              : Math.max(
+                  0,
+                  opts.findIndex(
+                    (node) => node.getAttribute("aria-selected") === "true",
+                  ),
+                );
+      } else if (event.key === "ArrowDown") index += 1;
+      else if (event.key === "ArrowUp") index -= 1;
+      else if (event.key === "PageDown") index += 5;
+      else if (event.key === "PageUp") index -= 5;
+      else if (event.key === "Home") index = 0;
+      else if (event.key === "End") index = opts.length - 1;
+      event.preventDefault();
+      const target = opts[Math.max(0, Math.min(opts.length - 1, index))];
+      if (target) target.focus();
+    });
+    /* Tab (or a click) that carries the focus out of the switch must not
+       leave a list hanging open over the content. */
+    wrap.addEventListener("focusout", (event) => {
+      if (!wrap.classList.contains("open")) return;
+      const next = event.relatedTarget;
+      if (next && wrap.contains(next)) return;
+      closeLangSwitch(wrap);
     });
     /* Warm the translation modules the moment the control is pointed at or
        focused, so the first switch is instant. */
@@ -1140,6 +1200,20 @@ async function loadUsers() {
   }
 }
 
+/* Rows open on click, but a row is not a button: make it reachable with the
+   keyboard too. Enter / Space reuse the click handler (so the server row's
+   "delete button inside a row" guard keeps working), and the keydown is
+   ignored when a real control inside the row holds the focus. */
+function wireRowKeys(row) {
+  row.tabIndex = 0;
+  row.addEventListener("keydown", (event) => {
+    if (event.target !== row) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    row.click();
+  });
+}
+
 function paintUsers(data) {
   const total = document.getElementById("users-total");
   if (total) total.textContent = t("total", { n: fmtNum(data.total) });
@@ -1167,6 +1241,7 @@ function paintUsers(data) {
 
   body.querySelectorAll("tr[data-id]").forEach((row) => {
     row.addEventListener("click", () => openUser(row.dataset.id));
+    wireRowKeys(row);
   });
 
   const pager = document.getElementById("users-pager");
@@ -1580,6 +1655,7 @@ function paintServers(data) {
       const server = data.items.find((item) => item.id === row.dataset.id);
       openServer(server);
     });
+    wireRowKeys(row);
   });
   body.querySelectorAll("[data-delete]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1749,7 +1825,17 @@ async function boot() {
     closeOpenLangSwitches(inside);
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeOpenLangSwitches(null);
+    if (event.key !== "Escape") return;
+    const active = document.activeElement;
+    const wrap =
+      active && active.closest ? active.closest(".lang-switch") : null;
+    closeOpenLangSwitches(null);
+    /* Collapsing hides the option that had the focus — put it back on the
+       trigger instead of dropping it on <body>. */
+    if (wrap) {
+      const trigger = wrap.querySelector("[data-set-lang-trigger]");
+      if (trigger) trigger.focus();
+    }
   });
   window.addEventListener("resize", () => {
     document.querySelectorAll(".lang-switch.open").forEach((wrap) => {
