@@ -22,6 +22,16 @@ import {
   setUserEmail,
 } from "./routes/users.js";
 import { listServers, renameServer, deleteServer } from "./routes/servers.js";
+import {
+  getServer,
+  searchServerMembers,
+  addServerMember,
+  removeServerMember,
+  updateServerMember,
+  createServerRole,
+  deleteServerRole,
+  getMemberAvatar,
+} from "./routes/members.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "..", "public");
@@ -82,6 +92,14 @@ app.post("/api/users/:id/privileged", requireAuth, setUserPrivileged);
 app.post("/api/users/:id/disabled", requireAuth, setUserDisabled);
 
 app.get("/api/servers", requireAuth, listServers);
+app.get("/api/servers/:id", requireAuth, getServer);
+app.get("/api/servers/:id/members", requireAuth, searchServerMembers);
+app.post("/api/servers/:id/members", requireAuth, addServerMember);
+app.post("/api/servers/:id/members/:userId", requireAuth, updateServerMember);
+app.delete("/api/servers/:id/members/:userId", requireAuth, removeServerMember);
+app.post("/api/servers/:id/roles", requireAuth, createServerRole);
+app.delete("/api/servers/:id/roles/:roleId", requireAuth, deleteServerRole);
+app.get("/api/servers/:id/members/:userId/avatar", requireAuth, getMemberAvatar);
 app.post("/api/servers/:id/rename", requireAuth, renameServer);
 app.delete("/api/servers/:id", requireAuth, deleteServer);
 

@@ -130,6 +130,47 @@ const I18N = {
     deleting: "Удаление…",
     t_deleted: "Сервер удалён: каналов {c}, сообщений {m}, участников {n}",
 
+    drawer_created: "Создан {d}",
+    tab_members: "Участники",
+    tab_roles: "Роли",
+    tab_settings: "Настройки",
+    m_add_title: "Добавить участника",
+    m_add_hint: "Введите имя или username#дискриминатор — список сузится.",
+    m_add_none: "Добавлять больше некого",
+    m_add: "Добавить",
+    m_search_ph: "Поиск участников",
+    m_pick_hint: "Выберите участника, чтобы изменить его псевдоним или роли.",
+    m_edit_title: "Участник",
+    m_joined: "вступил {d}",
+    m_owner: "Владелец",
+    m_remove: "Удалить из сервера",
+    f_nickname: "Псевдоним на этом сервере",
+    nickname_hint: "Пусто — участник показывается под обычным именем.",
+    f_roles: "Роли",
+    roles_new: "Новая роль",
+    roles_create: "Создать роль",
+    f_role_name: "Название роли",
+    f_role_colour: "Цвет",
+    f_role_rank: "Ранг",
+    roles_holders: "участников: {n}",
+    roles_none: "Ролей пока нет",
+    delete_warn_short: "Удаление сервера сотрёт его каналы, сообщения и участников.",
+    confirm_member_remove: "Удалить {u} из этого сервера?",
+    confirm_role_delete:
+      "Удалить роль «{r}»? Она будет снята со всех участников.",
+    t_member_added: "Участник добавлен",
+    t_member_saved: "Участник обновлён",
+    t_member_removed: "Участник удалён",
+    t_role_created: "Роль создана",
+    t_role_deleted: "Роль удалена, обновлено участников: {n}",
+    err_missing_user: "Выберите пользователя",
+    err_user_not_found: "Пользователь не найден",
+    err_already_member: "Этот пользователь уже в сервере",
+    err_is_owner: "Владельца нельзя удалить из сервера",
+    err_invalid_roles: "Некорректный список ролей",
+    err_invalid_role_name: "Название роли: 1–32 символа",
+    err_too_many_roles: "Слишком много ролей (максимум 100)",
+
     err_network: "Нет соединения с сервером",
     err_internal: "Внутренняя ошибка сервера",
     err_invalid_credentials: "Неверный логин или пароль",
@@ -285,6 +326,48 @@ const I18N = {
     delete_ph: "Type the server name to confirm",
     deleting: "Deleting…",
     t_deleted: "Server deleted: {c} channels, {m} messages, {n} members",
+
+    drawer_created: "Created {d}",
+    tab_members: "Members",
+    tab_roles: "Roles",
+    tab_settings: "Settings",
+    m_add_title: "Add a member",
+    m_add_hint: "Type a name or username#discriminator to narrow the list.",
+    m_add_none: "Nobody left to add",
+    m_add: "Add",
+    m_search_ph: "Search members",
+    m_pick_hint: "Pick a member to change their nickname or roles.",
+    m_edit_title: "Member",
+    m_joined: "joined {d}",
+    m_owner: "Owner",
+    m_remove: "Remove from server",
+    f_nickname: "Nickname on this server",
+    nickname_hint: "Empty — the member is shown under the usual name.",
+    f_roles: "Roles",
+    roles_new: "New role",
+    roles_create: "Create role",
+    f_role_name: "Role name",
+    f_role_colour: "Colour",
+    f_role_rank: "Rank",
+    roles_holders: "{n} members",
+    roles_none: "No roles yet",
+    delete_warn_short:
+      "Deleting the server removes its channels, messages and members.",
+    confirm_member_remove: "Remove {u} from this server?",
+    confirm_role_delete:
+      "Delete the role “{r}”? It will be taken off every member.",
+    t_member_added: "Member added",
+    t_member_saved: "Member updated",
+    t_member_removed: "Member removed",
+    t_role_created: "Role created",
+    t_role_deleted: "Role deleted, members updated: {n}",
+    err_missing_user: "Choose a user",
+    err_user_not_found: "User not found",
+    err_already_member: "This user is already in the server",
+    err_is_owner: "The owner cannot be removed from the server",
+    err_invalid_roles: "Invalid role list",
+    err_invalid_role_name: "Role name: 1–32 characters",
+    err_too_many_roles: "Too many roles (100 at most)",
 
     err_network: "Cannot reach the server",
     err_internal: "Internal server error",
@@ -1673,142 +1756,705 @@ function paintServers(data) {
   }
 }
 
-function openServer(server, deleteMode = false) {
+/* ---------- server drawer ------------------------------------------------ */
+
+/* One server, opened from the servers table. Identity and editing on the
+   left, the member roster on the right. Everything that used to be a
+   "rename + delete" dialog lives here now, because managing a server means
+   managing who is in it — and that needs room for a list. */
+
+const drawerSeq = { current: null };
+/** Where the open drawer lives, so avatars can be fetched through it. */
+let drawerServerId = null;
+
+function initials(name) {
+  const clean = String(name || "?").trim();
+  return esc(clean.slice(0, 2).toUpperCase() || "?");
+}
+
+/** Avatar via the panel's own media proxy; initials when there is none. */
+function avatarHTML(hasAvatar, name, size = 34, userId) {
+  const style = `width:${size}px;height:${size}px`;
+  if (hasAvatar && userId && drawerServerId) {
+    const src = url(
+      `api/servers/${drawerServerId}/members/${encodeURIComponent(userId)}/avatar`,
+    );
+    return `<span class="avatar" style="${style}"><img src="${esc(
+      src,
+    )}" alt="" loading="lazy" onerror="this.remove()" /></span>`;
+  }
+  return `<span class="avatar" style="${style}">${initials(name)}</span>`;
+}
+
+function roleTag(role) {
+  const colour = role.colour ? ` style="color:${esc(role.colour)}"` : "";
+  return `<span class="role-tag"><span class="role-dot"${
+    role.colour ? ` style="background:${esc(role.colour)}"` : ""
+  }></span><span${colour}>${esc(role.name)}</span></span>`;
+}
+
+function rolesOf(data, ids) {
+  const byId = new Map(data.roles.map((role) => [role.id, role]));
+  return (ids || []).map((id) => byId.get(id)).filter(Boolean);
+}
+
+/** Sort members the way the roster reads: owner first, then by name. */
+function sortMembers(members) {
+  return [...members].sort((a, b) => {
+    if (a.owner !== b.owner) return a.owner ? -1 : 1;
+    return String(a.displayName || a.id).localeCompare(
+      String(b.displayName || b.id),
+    );
+  });
+}
+
+function memberMatches(member, query) {
+  if (!query) return true;
+  const needle = query.toLowerCase();
+  return [member.displayName, member.user && member.user.tag, member.user && member.user.username, member.id]
+    .filter(Boolean)
+    .some((value) => String(value).toLowerCase().includes(needle));
+}
+
+async function openServer(server, deleteMode = false) {
   if (!server) return;
   closeOverlays();
+  const seq = bump();
+  let data;
+  try {
+    data = await api(`api/servers/${server.id}`);
+  } catch (err) {
+    if (seq === viewSeq) toast(errText(err), true);
+    return;
+  }
+  if (seq !== viewSeq) return;
 
+  if (deleteMode) {
+    openServerDelete(server);
+    return;
+  }
+  openServerDrawer(data);
+}
+
+/* Kept intact: deletion keeps the type-the-name confirmation, it is now a
+   small dialog of its own instead of a mode of the old big one. */
+function openServerDelete(server) {
+  closeOverlays();
   const overlay = document.createElement("div");
   overlay.className = "overlay";
   overlay.innerHTML = `
     <div class="modal">
-      <h2>${esc(server.name)}</h2>
-
-      <div class="msec">
-        <div class="msec-title">${esc(t("s_info"))}</div>
-        <div class="kv">
-          <dt>ID</dt><dd class="mono">${esc(server.id)}</dd>
-          <dt>${esc(t("th_owner"))}</dt><dd>${esc(server.ownerTag || server.owner)}</dd>
-          <dt>${esc(t("th_channels"))}</dt><dd>${esc(fmtNum(server.channels))}</dd>
-          <dt>${esc(t("th_members"))}</dt><dd>${esc(fmtNum(server.members))}</dd>
-          <dt>${esc(t("s_desc"))}</dt><dd>${esc(server.description || "—")}</dd>
-          <dt>${esc(t("th_created"))}</dt><dd>${esc(fmtDate(server.createdAt))}</dd>
+      <h2>${esc(t("delete_server"))}</h2>
+      <div class="subtitle">${esc(server.name)}</div>
+      <div class="hint note">${esc(t("delete_warn"))}</div>
+      <div class="field">
+        <label>${esc(t("delete_ph"))}</label>
+        <div class="row">
+          <input type="text" id="m-confirm" />
+          <button class="btn danger" id="m-delete" type="button" disabled>${esc(t("delete"))}</button>
         </div>
       </div>
-
-      ${
-        deleteMode
-          ? `
-      <div class="msec">
-        <div class="msec-title">${esc(t("s_danger"))}</div>
-        <div class="hint note">${esc(t("delete_warn"))}</div>
-        <div class="field">
-          <label>${esc(t("delete_ph"))}</label>
-          <div class="row">
-            <input type="text" id="m-confirm" />
-            <button class="btn danger" id="m-delete" type="button" disabled>${esc(t("delete"))}</button>
-          </div>
-        </div>
-      </div>`
-          : `
-      <div class="msec">
-        <div class="msec-title">${esc(t("s_edit"))}</div>
-        <div class="field">
-          <label>${esc(t("f_server_name"))}</label>
-          <input type="text" id="m-name" value="${esc(server.name)}" />
-        </div>
-        <div class="field">
-          <label>${esc(t("f_server_desc"))}</label>
-          <textarea id="m-desc" rows="3">${esc(server.description || "")}</textarea>
-        </div>
-        <div class="hint" id="m-rename-hint"></div>
-        <div class="row end">
-          <button class="btn primary" id="m-rename" type="button">${esc(t("save"))}</button>
-        </div>
-      </div>`
-      }
-
       <div class="modal-actions">
-        <button class="btn ${deleteMode ? "tonal" : "danger"}" id="m-del-open" type="button">${
-          deleteMode ? esc(t("close")) : esc(t("delete_server"))
-        }</button>
-        <button class="btn flat esc-hint" id="m-close" type="button">${esc(t("close"))}</button>
+        <button class="btn flat" id="m-close" type="button">${esc(t("close"))}</button>
       </div>
     </div>`;
-
   document.body.appendChild(overlay);
+
   const close = () => overlay.remove();
   overlay.addEventListener("click", (event) => {
     if (event.target === overlay) close();
   });
   overlay.querySelector("#m-close").addEventListener("click", close);
 
-  const delOpen = overlay.querySelector("#m-del-open");
-  delOpen.addEventListener("click", () => {
-    if (deleteMode) {
+  const confirmInput = overlay.querySelector("#m-confirm");
+  const deleteButton = overlay.querySelector("#m-delete");
+  confirmInput.addEventListener("input", () => {
+    deleteButton.disabled = confirmInput.value !== server.name;
+  });
+  deleteButton.addEventListener("click", async () => {
+    deleteButton.disabled = true;
+    deleteButton.textContent = t("deleting");
+    try {
+      const result = await api(`api/servers/${server.id}`, { method: "DELETE" });
+      toast(
+        t("t_deleted", {
+          c: result.deleted.channels,
+          m: result.deleted.messages,
+          n: result.deleted.members,
+        }),
+      );
       close();
-    } else {
-      openServer(server, true);
+      if (state.view === "servers") loadServers();
+    } catch (err) {
+      toast(errText(err), true);
+      deleteButton.disabled = false;
+      deleteButton.textContent = t("delete");
     }
   });
+  confirmInput.focus();
+}
 
-  if (deleteMode) {
-    const confirmInput = overlay.querySelector("#m-confirm");
-    const deleteButton = overlay.querySelector("#m-delete");
-    confirmInput.addEventListener("input", () => {
-      deleteButton.disabled = confirmInput.value !== server.name;
+function openServerDrawer(data) {
+  const seq = bump();
+  drawerSeq.current = seq;
+
+  const view = {
+    tab: "members",
+    query: "",
+    picked: null,
+    rolesDraft: null,
+    nickname: "",
+  };
+
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="${esc(data.name)}">
+      <div class="drawer-head">
+        <div class="drawer-title">
+          <h2 id="drawer-name">${esc(data.name)}</h2>
+          <div class="drawer-sub">
+            <span class="mono">${esc(data.id)}</span>
+            <span>·</span>
+            <span>${esc(t("drawer_created", { d: fmtDate(data.createdAt) }))}</span>
+            ${
+              data.ownerUser
+                ? `<span>·</span><span>${esc(t("th_owner"))}: ${esc(data.ownerUser.tag)}</span>`
+                : ""
+            }
+          </div>
+        </div>
+        <button class="btn flat small drawer-close" id="drawer-close" type="button">${esc(t("close"))}</button>
+      </div>
+      <div class="drawer-tabs" id="drawer-tabs">
+        <button class="drawer-tab active" data-tab="members" type="button">
+          ${esc(t("tab_members"))}<span class="drawer-count" id="tab-members-count">${data.members.length}</span>
+        </button>
+        <button class="drawer-tab" data-tab="roles" type="button">
+          ${esc(t("tab_roles"))}<span class="drawer-count" id="tab-roles-count">${data.roles.length}</span>
+        </button>
+        <button class="drawer-tab" data-tab="settings" type="button">${esc(t("tab_settings"))}</button>
+      </div>
+      <div class="drawer-body" id="drawer-body"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    drawerSeq.current = null;
+    drawerServerId = null;
+    overlay.remove();
+    if (state.view === "servers") loadServers();
+  };
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) close();
+  });
+  overlay.querySelector("#drawer-close").addEventListener("click", close);
+
+  overlay.querySelectorAll("[data-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      view.tab = button.dataset.tab;
+      overlay
+        .querySelectorAll("[data-tab]")
+        .forEach((tab) => tab.classList.toggle("active", tab === button));
+      paintTab();
     });
-    deleteButton.addEventListener("click", async () => {
-      deleteButton.disabled = true;
-      deleteButton.textContent = t("deleting");
-      try {
-        const result = await api(`api/servers/${server.id}`, { method: "DELETE" });
-        toast(
-          t("t_deleted", {
-            c: result.deleted.channels,
-            m: result.deleted.messages,
-            n: result.deleted.members,
-          }),
-        );
-        close();
-        if (state.view === "servers") loadServers();
-      } catch (err) {
-        toast(errText(err), true);
-        const buttonNow = overlay.querySelector("#m-delete");
-        if (buttonNow) {
-          buttonNow.disabled = false;
-          buttonNow.textContent = t("delete");
+  });
+
+  const bodyOf = () => overlay.querySelector("#drawer-body");
+
+  drawerServerId = data.id;
+
+  function setData(next) {
+    data = next;
+    const nameEl = overlay.querySelector("#drawer-name");
+    if (nameEl) nameEl.textContent = data.name;
+    const members = overlay.querySelector("#tab-members-count");
+    if (members) members.textContent = data.members.length;
+    const roles = overlay.querySelector("#tab-roles-count");
+    if (roles) roles.textContent = data.roles.length;
+  }
+
+  async function refresh() {
+    const mine = bump();
+    drawerSeq.current = mine;
+    try {
+      const next = await api(`api/servers/${data.id}`);
+      if (drawerSeq.current !== mine) return;
+      setData(next);
+      paintTab();
+    } catch (err) {
+      toast(errText(err), true);
+    }
+  }
+
+  function paintTab() {
+    const body = bodyOf();
+    if (!body) return;
+    if (view.tab === "members") paintMembers(body);
+    else if (view.tab === "roles") paintRoles(body);
+    else paintSettings(body);
+  }
+
+  /* ---- members ---- */
+
+  function paintMembers(body) {
+    body.classList.remove("single");
+    const members = sortMembers(data.members);
+    const shown = members.filter((member) => memberMatches(member, view.query));
+    const picked = data.members.find((member) => member.id === view.picked);
+
+    body.innerHTML = `
+      <div class="drawer-side">
+        <div class="drawer-panel">
+          <div class="drawer-panel-title">${esc(t("m_add_title"))}</div>
+          <div class="pick-list" id="m-add-results">
+            <div class="drawer-note">${esc(t("m_add_hint"))}</div>
+          </div>
+        </div>
+        ${
+          picked
+            ? memberEditorHTML(picked)
+            : `<div class="drawer-panel"><div class="drawer-note">${esc(t("m_pick_hint"))}</div></div>`
         }
+      </div>
+      <div class="drawer-main">
+        <div class="drawer-toolbar">
+          <input class="search" id="m-search" type="text" placeholder="${esc(
+            t("m_search_ph"),
+          )}" value="${esc(view.query)}" />
+        </div>
+        <div class="member-list" id="m-member-list">
+          ${
+            shown.length
+              ? shown.map(memberRowHTML).join("")
+              : `<div class="drawer-note">${esc(t("empty"))}</div>`
+          }
+        </div>
+      </div>`;
+
+    wireMemberList(body);
+    wireAddPicker(body);
+    if (picked) wireMemberEditor(body, picked);
+  }
+
+  function memberRowHTML(member) {
+    const tags = rolesOf(data, member.roles).map(roleTag).join("");
+    const sub =
+      member.nickname && member.user && member.nickname !== member.user.username
+        ? `${esc(member.user.tag)} · ${esc(t("m_joined", { d: fmtDate(member.joinedAt) }))}`
+        : `${esc(member.user ? member.user.tag : member.id)} · ${esc(
+            t("m_joined", { d: fmtDate(member.joinedAt) }),
+          )}`;
+    return `
+      <button class="member-row ${view.picked === member.id ? "picked" : ""}" data-member="${esc(
+        member.id,
+      )}" type="button">
+        ${avatarHTML(member.hasAvatar, member.displayName, 34, member.id)}
+        <span class="member-main">
+          <span class="member-name">
+            <span>${esc(member.displayName || member.id)}</span>
+            ${
+              member.owner
+                ? `<span class="badge admin">${esc(t("m_owner"))}</span>`
+                : ""
+            }
+          </span>
+          <span class="member-meta">${sub}</span>
+          ${tags ? `<span class="role-tags">${tags}</span>` : ""}
+        </span>
+      </button>`;
+  }
+
+  function wireMemberList(body) {
+    const search = body.querySelector("#m-search");
+    if (search) {
+      search.addEventListener("input", () => {
+        view.query = search.value;
+        const list = body.querySelector("#m-member-list");
+        if (!list) return;
+        const shown = sortMembers(data.members).filter((member) =>
+          memberMatches(member, view.query),
+        );
+        list.innerHTML = shown.length
+          ? shown.map(memberRowHTML).join("")
+          : `<div class="drawer-note">${esc(t("empty"))}</div>`;
+        list.querySelectorAll("[data-member]").forEach((row) => {
+          row.addEventListener("click", () => pick(row.dataset.member));
+        });
+      });
+    }
+    body.querySelectorAll("[data-member]").forEach((row) => {
+      row.addEventListener("click", () => pick(row.dataset.member));
+    });
+  }
+
+  function pick(id) {
+    view.picked = view.picked === id ? null : id;
+    const member = data.members.find((entry) => entry.id === id);
+    view.nickname = (member && member.nickname) || "";
+    view.rolesDraft = member ? [...member.roles] : [];
+    paintTab();
+  }
+
+  function wireAddPicker(body) {
+    const results = body.querySelector("#m-add-results");
+    if (!results) return;
+
+    let timer;
+    const run = async () => {
+      const query = (view.query || "").trim();
+      try {
+        const found = await api(
+          `api/servers/${data.id}/members?q=${encodeURIComponent(query || "")}`,
+        );
+        if (drawerSeq.current !== seq || !results.isConnected) return;
+        const free = found.items.filter((user) => !user.member);
+        results.innerHTML = free.length
+          ? free
+              .map(
+                (user) => `
+                <div class="search-hit">
+                  ${avatarHTML(Boolean(user.avatarId), user.displayName || user.username, 28, user.id)}
+                  <span class="member-main">
+                    <span class="member-name"><span>${esc(
+                      user.displayName || user.username,
+                    )}</span></span>
+                    <span class="member-meta">${esc(user.tag)}</span>
+                  </span>
+                  <button class="btn tonal small" data-add="${esc(user.id)}" type="button">${esc(
+                    t("m_add"),
+                  )}</button>
+                </div>`,
+              )
+              .join("")
+          : `<div class="drawer-note">${esc(t("m_add_none"))}</div>`;
+        results.querySelectorAll("[data-add]").forEach((button) => {
+          button.addEventListener("click", () => addMember(button.dataset.add, button));
+        });
+      } catch (err) {
+        if (drawerSeq.current !== seq) return;
+        results.innerHTML = `<div class="drawer-note">${esc(errText(err))}</div>`;
+      }
+    };
+    const schedule = () => {
+      clearTimeout(timer);
+      timer = setTimeout(run, 250);
+    };
+    // The roster search drives the "add" list too: typing a name narrows
+    // both, which is what an admin is doing when they type in that box.
+    const search = body.querySelector("#m-search");
+    if (search) search.addEventListener("input", schedule);
+    run();
+  }
+
+  async function addMember(id, button) {
+    button.disabled = true;
+    try {
+      await api(`api/servers/${data.id}/members`, {
+        method: "POST",
+        body: { user_id: id },
+      });
+      toast(t("t_member_added"));
+      await refresh();
+    } catch (err) {
+      toast(errText(err), true);
+      button.disabled = false;
+    }
+  }
+
+  function memberEditorHTML(member) {
+    const roles = rolesOf(data, member.roles);
+    return `
+      <div class="drawer-panel">
+        <div class="drawer-panel-title">${esc(t("m_edit_title"))}</div>
+        <div class="search-hit" style="background:transparent;padding:0 0 10px">
+          ${avatarHTML(member.hasAvatar, member.displayName, 34, member.id)}
+          <span class="member-main">
+            <span class="member-name"><span>${esc(member.displayName || member.id)}</span></span>
+            <span class="member-meta">${esc(member.user ? member.user.tag : member.id)}</span>
+          </span>
+        </div>
+        <div class="field">
+          <label>${esc(t("f_nickname"))}</label>
+          <input type="text" id="m-nickname" maxlength="32" placeholder="${esc(
+            (member.user && (member.user.displayName || member.user.username)) || "",
+          )}" value="${esc(member.nickname || "")}" />
+          <div class="hint note">${esc(t("nickname_hint"))}</div>
+        </div>
+        <div class="field">
+          <label>${esc(t("f_roles"))}</label>
+          <div class="pick-list" id="m-role-picks">
+            ${
+              data.roles.length
+                ? data.roles
+                    .map(
+                      (role) => `
+                      <button class="role-pick ${
+                        view.rolesDraft.includes(role.id) ? "on" : ""
+                      }" data-role="${esc(role.id)}" type="button" aria-pressed="${
+                        view.rolesDraft.includes(role.id) ? "true" : "false"
+                      }">
+                        <span class="role-dot"${
+                          role.colour ? ` style="background:${esc(role.colour)}"` : ""
+                        }></span>
+                        <span>${esc(role.name)}</span>
+                        <span class="rank">#${role.rank}</span>
+                      </button>`,
+                    )
+                    .join("")
+                : `<div class="drawer-note">${esc(t("roles_none"))}</div>`
+            }
+          </div>
+          <div class="hint" id="m-role-hint"></div>
+        </div>
+        <div class="row end" style="gap:8px">
+          ${
+            member.owner
+              ? ""
+              : `<button class="btn danger small" id="m-remove" type="button">${esc(
+                  t("m_remove"),
+                )}</button>`
+          }
+          <button class="btn primary small" id="m-save-member" type="button">${esc(
+            t("save"),
+          )}</button>
+        </div>
+        ${roles.length ? `<div class="role-tags" style="margin-top:8px">${roles.map(roleTag).join("")}</div>` : ""}
+      </div>`;
+  }
+
+  function wireMemberEditor(body, member) {
+    body.querySelectorAll("#m-role-picks [data-role]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.role;
+        if (view.rolesDraft.includes(id))
+          view.rolesDraft = view.rolesDraft.filter((role) => role !== id);
+        else view.rolesDraft = [...view.rolesDraft, id];
+        button.classList.toggle("on", view.rolesDraft.includes(id));
+        button.setAttribute("aria-pressed", view.rolesDraft.includes(id) ? "true" : "false");
+      });
+    });
+
+    const save = body.querySelector("#m-save-member");
+    if (save) {
+      save.addEventListener("click", async () => {
+        const nickname = body.querySelector("#m-nickname").value.trim();
+        const hint = body.querySelector("#m-role-hint");
+        save.disabled = true;
+        try {
+          await api(`api/servers/${data.id}/members/${member.id}`, {
+            method: "POST",
+            body: { nickname: nickname || null, roles: view.rolesDraft },
+          });
+          toast(t("t_member_saved"));
+          await refresh();
+        } catch (err) {
+          if (hint) hint.textContent = errText(err);
+          save.disabled = false;
+        }
+      });
+    }
+
+    const remove = body.querySelector("#m-remove");
+    if (remove) {
+      remove.addEventListener("click", async () => {
+        if (!window.confirm(t("confirm_member_remove", { u: member.displayName || member.id })))
+          return;
+        remove.disabled = true;
+        try {
+          await api(`api/servers/${data.id}/members/${member.id}`, {
+            method: "DELETE",
+          });
+          toast(t("t_member_removed"));
+          view.picked = null;
+          await refresh();
+        } catch (err) {
+          toast(errText(err), true);
+          remove.disabled = false;
+        }
+      });
+    }
+  }
+
+  /* ---- roles ---- */
+
+  function paintRoles(body) {
+    body.classList.add("single");
+    body.innerHTML = `
+      <div class="drawer-side" style="max-width:520px">
+        <div class="drawer-panel">
+          <div class="drawer-panel-title">${esc(t("roles_new"))}</div>
+          <div class="field">
+            <label>${esc(t("f_role_name"))}</label>
+            <input type="text" id="r-name" maxlength="32" />
+          </div>
+          <div class="grid2">
+            <div class="field">
+              <label>${esc(t("f_role_colour"))}</label>
+              <input class="color-input" type="color" id="r-colour" value="#5470ec" />
+            </div>
+            <div class="field">
+              <label>${esc(t("f_role_rank"))}</label>
+              <input type="number" id="r-rank" min="0" max="999" value="0" />
+            </div>
+          </div>
+          <div class="hint" id="r-hint"></div>
+          <div class="row end">
+            <button class="btn primary small" id="r-create" type="button">${esc(
+              t("roles_create"),
+            )}</button>
+          </div>
+        </div>
+        <div class="drawer-panel">
+          <div class="drawer-panel-title">${esc(t("tab_roles"))}</div>
+          <div class="member-list">
+            ${
+              data.roles.length
+                ? data.roles
+                    .map((role) => {
+                      const holders = data.members.filter((member) =>
+                        member.roles.includes(role.id),
+                      ).length;
+                      return `
+                        <div class="member-row" style="cursor:default">
+                          <span class="role-dot"${
+                            role.colour ? ` style="background:${esc(role.colour)}"` : ""
+                          }></span>
+                          <span class="member-main">
+                            <span class="member-name"><span>${esc(role.name)}</span></span>
+                            <span class="member-meta">${esc(
+                              t("roles_holders", { n: holders }),
+                            )} · #${role.rank}</span>
+                          </span>
+                          <button class="btn danger small" data-del-role="${esc(
+                            role.id,
+                          )}" type="button">${esc(t("delete"))}</button>
+                        </div>`;
+                    })
+                    .join("")
+                : `<div class="drawer-note">${esc(t("roles_none"))}</div>`
+            }
+          </div>
+        </div>
+      </div>`;
+
+    const create = body.querySelector("#r-create");
+    create.addEventListener("click", async () => {
+      const hint = body.querySelector("#r-hint");
+      hint.textContent = "";
+      const name = body.querySelector("#r-name").value.trim();
+      const colour = body.querySelector("#r-colour").value;
+      const rank = Number(body.querySelector("#r-rank").value) || 0;
+      create.disabled = true;
+      try {
+        await api(`api/servers/${data.id}/roles`, {
+          method: "POST",
+          body: { name, colour, rank },
+        });
+        toast(t("t_role_created"));
+        await refresh();
+      } catch (err) {
+        hint.textContent = errText(err);
+        create.disabled = false;
       }
     });
-    confirmInput.focus();
-  } else {
-    /* rename */
-    overlay.querySelector("#m-rename").addEventListener("click", async () => {
-      const hint = overlay.querySelector("#m-rename-hint");
-      if (hint) hint.textContent = "";
-      const button = overlay.querySelector("#m-rename");
-      button.disabled = true;
+
+    body.querySelectorAll("[data-del-role]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const role = data.roles.find((entry) => entry.id === button.dataset.delRole);
+        if (!role) return;
+        if (!window.confirm(t("confirm_role_delete", { r: role.name }))) return;
+        button.disabled = true;
+        try {
+          const result = await api(
+            `api/servers/${data.id}/roles/${button.dataset.delRole}`,
+            { method: "DELETE" },
+          );
+          toast(t("t_role_deleted", { n: result.members }));
+          await refresh();
+        } catch (err) {
+          toast(errText(err), true);
+          button.disabled = false;
+        }
+      });
+    });
+  }
+
+  /* ---- settings ---- */
+
+  function paintSettings(body) {
+    body.classList.add("single");
+    body.innerHTML = `
+      <div class="drawer-side" style="max-width:560px">
+        <div class="drawer-panel">
+          <div class="drawer-panel-title">${esc(t("s_edit"))}</div>
+          <div class="field">
+            <label>${esc(t("f_server_name"))}</label>
+            <input type="text" id="m-name" maxlength="32" value="${esc(data.name)}" />
+          </div>
+          <div class="field">
+            <label>${esc(t("f_server_desc"))}</label>
+            <textarea id="m-desc" rows="3">${esc(data.description || "")}</textarea>
+          </div>
+          <div class="hint" id="m-rename-hint"></div>
+          <div class="row end">
+            <button class="btn primary small" id="m-rename" type="button">${esc(
+              t("save"),
+            )}</button>
+          </div>
+        </div>
+        <div class="drawer-panel">
+          <div class="drawer-panel-title">${esc(t("s_info"))}</div>
+          <div class="kv">
+            <dt>ID</dt><dd class="mono">${esc(data.id)}</dd>
+            <dt>${esc(t("th_owner"))}</dt><dd>${esc(
+              data.ownerUser ? data.ownerUser.tag : data.owner,
+            )}</dd>
+            <dt>${esc(t("th_channels"))}</dt><dd>${esc(fmtNum(data.channels))}</dd>
+            <dt>${esc(t("th_members"))}</dt><dd>${esc(fmtNum(data.members.length))}</dd>
+            <dt>${esc(t("tab_roles"))}</dt><dd>${esc(fmtNum(data.roles.length))}</dd>
+            <dt>${esc(t("th_created"))}</dt><dd>${esc(fmtDate(data.createdAt))}</dd>
+          </div>
+        </div>
+        <div class="danger-strip">
+          <span>${esc(t("delete_warn_short"))}</span>
+          <button class="btn danger small" id="m-del-open" type="button">${esc(
+            t("delete_server"),
+          )}</button>
+        </div>
+      </div>`;
+
+    const save = body.querySelector("#m-rename");
+    save.addEventListener("click", async () => {
+      const hint = body.querySelector("#m-rename-hint");
+      hint.textContent = "";
+      save.disabled = true;
       try {
-        await api(`api/servers/${server.id}/rename`, {
+        await api(`api/servers/${data.id}/rename`, {
           method: "POST",
           body: {
-            name: overlay.querySelector("#m-name").value.trim(),
-            description: overlay.querySelector("#m-desc").value,
+            name: body.querySelector("#m-name").value.trim(),
+            description: body.querySelector("#m-desc").value,
           },
         });
         toast(t("t_renamed"));
-        close();
-        if (state.view === "servers") loadServers();
+        await refresh();
       } catch (err) {
-        const hintNow = overlay.querySelector("#m-rename-hint");
-        if (hintNow) hintNow.textContent = errText(err);
-        const buttonNow = overlay.querySelector("#m-rename");
-        if (buttonNow) buttonNow.disabled = false;
+        hint.textContent = errText(err);
+        save.disabled = false;
       }
     });
+
+    body.querySelector("#m-del-open").addEventListener("click", () => {
+      close();
+      openServerDelete({ id: data.id, name: data.name });
+    });
   }
+
+  paintTab();
 }
 
+/* ---------- boot ------------------------------------------------------- */
 /* ---------- boot ------------------------------------------------------- */
 
 async function boot() {

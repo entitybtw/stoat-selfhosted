@@ -39,11 +39,22 @@ Self-hosting Stoat using Docker
   picker for one share. The virtual source is retried while the previous one is
   still closing, so restarting a share keeps its audio — and because it
   captures the sink rather than the picked stream, switching the shared window
-  no longer changes what the others hear.
-- A **Soundboard** in the call card, built like the emoji picker: a searchable
-  grid of tiles with the sound's icon and name, a preview row that doubles as
-  the toolbar (play, rename, picture, emoji, clear, remove) and a footer with
-  the volume, the master mute and the add button. Every sound can be decorated
+  no longer changes what the others hear. Clicking the share button while you
+  are sharing now **swaps in another window in place** (`restart()` on the same
+  video track) instead of closing the share and asking for everything again,
+  and stopping has a button of its own.
+- A **Soundboard** in the call card, built like the emoji picker and sized to
+  it: a search pill, a grid of compact tiles (icon + name) and one thin player
+  row (art, name, time, scrubber, play/pause, stop) that turns into the rename
+  field when you rename. Everything a sound offers — new name, picture,
+  emoji, share with the server, share with a friend, remove — lives in a
+  folded **tune** panel that acts on the clip that is playing (or on the last
+  one edited), together with the volume, the master mute and the sound count,
+  so the menu stays a list of sounds instead of a wall of icons; the library
+  rail only appears once there is more than one library to choose from, and
+  *add* opens the file picker straight away and files the sound wherever the
+  rail is pointed. Sharing with a friend is a small sheet, not a row that
+  grows the menu. Every sound can be decorated
   with an uploaded picture, a unicode emoji or a server emoji, announced over
   LiveKit's data channel and played back by every participant locally, so
   deafen, per-user volume and the soundboard volume all apply per listener.
@@ -139,13 +150,33 @@ Self-hosting Stoat using Docker
   connected clients receive `DeleteAllSessions`), grant/revoke administrator
   rights and disable/enable an account (disabling also kicks all sessions).
 - Server management: a list with channel/member counts, owners and
-  descriptions, **renaming** (name 1–32 chars, description up to 1024 — the same
-  rules as `DataEditServer`, published as `ServerUpdate` on the server channel),
-  and **deletion that repeats the backend's full cascade** — messages with their
-  attachment records, detached emojis, channels with invites/unreads/webhooks,
-  members/bans, server attachments, audit logs — followed by Redis voice-state
-  cleanup (`node:`/`vc:`/`vc_members:` keys) and a `ServerDelete` event so
-  connected members watch the server disappear instead of erroring into it.
+  descriptions, and a **server drawer** that opens on any row. It has three
+  tabs — *Members*, *Roles* and *Settings* — and is where a server is
+  actually administered:
+  - **Members**: the roster with avatars, account tags, join dates, the
+    per-server nickname and role chips, a live filter, and an *add* list that
+    searches every account of the instance (`username#tag` or a fragment of
+    the name/display name) and drops the one you pick into the server. Selecting
+    a member opens their editor: the **nickname used on this server** (empty
+    means the usual name; validated like a display name) and the **roles they
+    hold**, plus *remove from server*. Everything is written as an ordinary
+    `MemberUpdate` / `MemberJoin` / `MemberLeave` event, so connected clients
+    see it immediately.
+  - **Roles**: create a role with a name, colour and rank, see how many
+    members hold it, and delete it — deleting also strips the role off every
+    member, so nobody is left holding a role the client cannot render.
+  - **Settings**: rename/describe the server (name 1–32 chars, description up
+    to 1024 — the same rules as `DataEditServer`, published as `ServerUpdate`
+    on the server channel), the channel/member/role counts, and **deletion
+    that repeats the backend's full cascade** — messages with their attachment
+    records, detached emojis, channels with invites/unreads/webhooks,
+    members/bans, server attachments, audit logs — followed by Redis
+    voice-state cleanup (`node:`/`vc:`/`vc_members:` keys) and a
+    `ServerDelete` event so connected members watch the server disappear
+    instead of erroring into it.
+  - Avatars are proxied through the panel (`…/members/:id/avatar`, served
+    from the media container), so they render under the panel's own CSP and
+    path prefix without exposing the file server to the browser.
 - The UI is **fully multilingual — all 69 Stoat languages**, picked from a
   dropdown on the login card and in the sidebar (persisted in `localStorage`,
   otherwise matched from the browser language: exact code, then sensible
@@ -187,9 +218,9 @@ Self-hosting Stoat using Docker
 example stays universal — the tags move together whenever a release is pushed.
 Pinned tags are published next to them for reproducible deploys: the backend
 images from `v0.1.0` (`v0.1.0-api`, …, `v0.1.0-voice-ingress`) and the web
-image from the `for-web` fork (`v0.1.6-web`). Swap any `latest-*` tag for its
+image from the `for-web` fork (`v0.1.7-web`). Swap any `latest-*` tag for its
 pinned counterpart when you want a reproducible deploy. The admin panel is
-versioned on its own and published as `v0.0.6` alongside `latest`.
+versioned on its own and published as `v0.0.7` alongside `latest`.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
 fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.
