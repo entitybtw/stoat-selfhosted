@@ -1396,13 +1396,18 @@ function paintUsers(data) {
 
 function renderPager(element, data, go) {
   if (!element) return;
-  const pages = Math.max(1, Math.ceil(data.total / data.limit));
+  // A payload without paging (an empty list answered by a stub or an older
+  // build) used to print "Page undefined of NaN"; fall back to a single page.
+  const limit = data.limit > 0 ? data.limit : (data.items?.length || 1);
+  const total = Number.isFinite(data.total) ? data.total : (data.items?.length || 0);
+  const page = Number.isFinite(data.page) && data.page >= 1 ? data.page : 1;
+  const pages = Math.max(1, Math.ceil(total / limit));
   element.innerHTML = `
-    <button class="btn tonal small" id="page-prev" ${data.page <= 1 ? "disabled" : ""}>${esc(t("prev"))}</button>
-    <span>${esc(t("page", { p: data.page, n: pages }))}</span>
-    <button class="btn tonal small" id="page-next" ${data.page >= pages ? "disabled" : ""}>${esc(t("next"))}</button>`;
-  element.querySelector("#page-prev").addEventListener("click", () => go(data.page - 1));
-  element.querySelector("#page-next").addEventListener("click", () => go(data.page + 1));
+    <button class="btn tonal small" id="page-prev" ${page <= 1 ? "disabled" : ""}>${esc(t("prev"))}</button>
+    <span>${esc(t("page", { p: page, n: pages }))}</span>
+    <button class="btn tonal small" id="page-next" ${page >= pages ? "disabled" : ""}>${esc(t("next"))}</button>`;
+  element.querySelector("#page-prev").addEventListener("click", () => go(page - 1));
+  element.querySelector("#page-next").addEventListener("click", () => go(page + 1));
 }
 
 /* ---------- user editor ------------------------------------------------ */
