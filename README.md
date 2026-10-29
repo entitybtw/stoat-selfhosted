@@ -27,6 +27,19 @@ Self-hosting Stoat using Docker
   ladder for every screen share quality, `contentHint: detail` for 720p/1080p
   sharing, and a camera capture sized from `limits().video_resolution` — which
   also stops the client publishing something `voice-ingress` kicks you for.
+- A screen share is captured at the quality you picked instead of a hard
+  640×480 @ 5 fps, and every preset is clamped to
+  `limits().video_resolution`, so a stock `[1080, 720]` instance no longer
+  rejects (and disconnects) a verbatim 720p share. System audio now comes from
+  the desktop's PipeWire virtual source whenever that device exists, instead of
+  asking Chromium for its own display-audio loopback and swapping the tracks
+  afterwards: the two used to race each other, which lost the sound for the
+  other side, failed the next capture with
+  `NotReadableError: Could not start audio source`, and opened a second system
+  picker for one share. The virtual source is retried while the previous one is
+  still closing, so restarting a share keeps its audio — and because it
+  captures the sink rather than the picked stream, switching the shared window
+  no longer changes what the others hear.
 - A **Soundboard** in the call card, built like the emoji picker: a searchable
   grid of tiles with the sound's icon and name, a preview row that doubles as
   the toolbar (play, rename, picture, emoji, clear, remove) and a footer with
@@ -172,10 +185,11 @@ Self-hosting Stoat using Docker
 
 `compose.yml` deliberately tracks `latest` and `latest-<component>` so the
 example stays universal — the tags move together whenever a release is pushed.
-The same release is also published under a pinned version (`v0.0.10`,
-`v0.0.10-api`, …, `v0.0.10-web`); swap any `latest-*` tag for its pinned
-counterpart when you want a reproducible deploy. The admin panel is versioned
-on its own and published as `v0.0.6` alongside `latest`.
+Pinned tags are published next to them for reproducible deploys: the backend
+images from `v0.1.0` (`v0.1.0-api`, …, `v0.1.0-voice-ingress`) and the web
+image from the `for-web` fork (`v0.1.6-web`). Swap any `latest-*` tag for its
+pinned counterpart when you want a reproducible deploy. The admin panel is
+versioned on its own and published as `v0.0.6` alongside `latest`.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
 fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.
