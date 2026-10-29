@@ -31,6 +31,7 @@ import {
   createServerRole,
   deleteServerRole,
   getMemberAvatar,
+  uploadMemberAvatar,
 } from "./routes/members.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -100,6 +101,12 @@ app.delete("/api/servers/:id/members/:userId", requireAuth, removeServerMember);
 app.post("/api/servers/:id/roles", requireAuth, createServerRole);
 app.delete("/api/servers/:id/roles/:roleId", requireAuth, deleteServerRole);
 app.get("/api/servers/:id/members/:userId/avatar", requireAuth, getMemberAvatar);
+app.put(
+  "/api/servers/:id/members/:userId/avatar",
+  requireAuth,
+  express.raw({ type: () => true, limit: "12mb" }),
+  uploadMemberAvatar,
+);
 app.post("/api/servers/:id/rename", requireAuth, renameServer);
 app.delete("/api/servers/:id", requireAuth, deleteServer);
 

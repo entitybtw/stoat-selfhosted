@@ -1,7 +1,9 @@
+import crypto from "node:crypto";
 import http from "node:http";
 import https from "node:https";
 
 import { col } from "../db.js";
+import { decodeImage, encodeSquareJpeg } from "../image.js";
 import { publishEvent } from "../redis.js";
 import { escapeRegex, parsePaging, ah, ulid, ulidTimestamp } from "../util.js";
 import { displayNameError } from "../validate.js";
@@ -305,6 +307,14 @@ export const updateServerMember = ah(async (req, res) => {
 
   const userId = req.params.userId;
   const body = req.body || {};
+  const memberDoc = await col("server_members").findOne({
+    _id: { server: server._id, user: userId },
+  });
+  if (!memberDoc) {
+    return res
+      .status(404)
+      .json({ error: "Участник не найден", code: "not_found" });
+  }
   const $set = {};
   const $unset = {};
   const data = {};
@@ -351,20 +361,34 @@ export const updateServerMember = ah(async (req, res) => {
     data.roles = ordered;
   }
 
+  // `avatar` is a per-server picture: people see it inside this server and
+  // it never touches the account. `null` (or "") removes it.
+  if (Object.prototype.hasOwnProperty.call(body, "avatar")) {
+    if (body.avatar === null || body.avatar === "") {
+      if (member?.avatar !== undefined) clear.push("Avatar");
+      $unset.avatar = "";
+    } else {
+      const id = String(body.avatar);
+      const attachment = /^[A-Za-z0-9_\-]{16,64}$/.test(id)
+        ? await col("attachments").findOne({ _id: id })
+        : null;
+      if (!attachment) {
+        return res
+          .status(404)
+          .json({ error: "Файл аватара не найден", code: "avatar_not_found" });
+      }
+      $set.avatar = attachment;
+      data.avatar = attachment;
+    }
+  }
+
   if (!Object.keys($set).length && !Object.keys($unset).length) {
     return res
       .status(400)
       .json({ error: "Нет изменений", code: "nothing_to_update" });
   }
 
-  const member = await col("server_members").findOne({
-    _id: { server: server._id, user: userId },
-  });
-  if (!member) {
-    return res
-      .status(404)
-      .json({ error: "Участник не найден", code: "not_found" });
-  }
+  const member = memberDoc;
 
   // A nickname equal to the stored one is not a change at all; empty
   // strings already became an unset above, so compare what is on disk.
@@ -512,6 +536,144 @@ export const deleteServerRole = ah(async (req, res) => {
   res.json({ ok: true, members: holders.length });
 });
 
+/** Autumn (file storage) lives next to us on the compose network. */
+function mediaBase() {
+  return (process.env.MEDIA_URL || "http://autumn:14704").replace(/\/+$/, "");
+}
+
+/**
+ * Store one object on the media server: `POST /<bucket>` hands out an id,
+ * `PUT /<bucket>/<id>` writes the bytes under it — the same two calls the
+ * client makes when it uploads an avatar.
+ */
+function putMediaObject(bucket, id, data) {
+  return new Promise((resolve, reject) => {
+    const base = mediaBase();
+    const target = new URL(`${base}/${bucket}/${encodeURIComponent(id)}`);
+    const client = target.protocol === "https:" ? https : http;
+    const req = client.request(
+      target,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "image/jpeg",
+          "Content-Length": data.length,
+        },
+      },
+      (res) => {
+        res.resume();
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+          resolve();
+        } else {
+          reject(new Error(`media responded ${res.statusCode}`));
+        }
+      },
+    );
+    req.setTimeout(10000, () => req.destroy(new Error("media timeout")));
+    req.on("error", reject);
+    req.end(data);
+  });
+}
+
+/**
+ * POST /api/servers/:id/members/:userId/avatar
+ *
+ * Set the picture this member shows inside this server. The body is the
+ * raw image: it is cropped to a centred square and re-encoded as a small
+ * JPEG before it is stored as an ordinary attachment (the same shape a
+ * client upload makes), so the account picture is untouched and every
+ * client renders it without asking us for anything.
+ */
+export const uploadMemberAvatar = ah(async (req, res) => {
+  const server = await findServer(req.params.id);
+  if (!server) {
+    return res
+      .status(404)
+      .json({ error: "Сервер не найден", code: "not_found" });
+  }
+
+  const member = await col("server_members").findOne({
+    _id: { server: server._id, user: req.params.userId },
+  });
+  if (!member) {
+    return res
+      .status(404)
+      .json({ error: "Участник не найден", code: "not_found" });
+  }
+
+  const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  if (!raw.length) {
+    return res.status(400).json({ error: "Пустой файл", code: "empty_file" });
+  }
+  if (raw.length > 12 * 1024 * 1024) {
+    return res
+      .status(413)
+      .json({ error: "Файл больше 12 МБ", code: "file_too_large" });
+  }
+
+  let image;
+  try {
+    image = decodeImage(raw);
+  } catch {
+    return res.status(400).json({
+      error: "Эту картинку не прочитать. Подойдёт JPEG или PNG.",
+      code: "invalid_image",
+    });
+  }
+
+  let jpeg;
+  try {
+    jpeg = encodeSquareJpeg(image, 256);
+  } catch {
+    return res.status(400).json({
+      error: "Картинку не удалось подготовить, попробуйте другую.",
+      code: "invalid_image",
+    });
+  }
+
+  const id = ulid();
+  const now = new Date().toISOString();
+  const attachment = {
+    _id: id,
+    tag: "avatars",
+    filename: `${id}.jpg`,
+    hash: crypto.createHash("sha256").update(jpeg).digest("hex"),
+    uploaded_at: now,
+    uploader_id: req.admin?.user?._id ?? null,
+    metadata: { type: "Image", width: 256, height: 256, animated: false },
+    content_type: "image/jpeg",
+    size: jpeg.length,
+  };
+
+  // Best effort: the media object is what clients fetch, the attachment
+  // record is what they read. The picture is still set when the object
+  // store is unreachable, and text-only members do not break.
+  try {
+    await putMediaObject("avatars", attachment.filename, jpeg);
+  } catch (err) {
+    console.warn(`[media] avatar upload failed: ${err.message}`);
+    return res.status(502).json({
+      error: "Хранилище файлов недоступно, попробуйте позже",
+      code: "media_unavailable",
+    });
+  }
+
+  await col("attachments").insertOne(attachment);
+  await col("server_members").updateOne(
+    { _id: member._id },
+    { $set: { avatar: attachment } },
+  );
+  await publishEvent(server._id, {
+    type: "MemberUpdate",
+    id: server._id,
+    user: req.params.userId,
+    data: { avatar: attachment },
+    clear: [],
+  });
+
+  res.json({ ok: true, attachment });
+});
+
 /**
  * GET /api/servers/:id/members/:userId/avatar
  *
@@ -545,10 +707,7 @@ export const getMemberAvatar = ah(async (req, res) => {
   }
   if (!id) return res.status(404).end();
 
-  // The media server lives next to us on the compose network in production;
-  // MEDIA_URL lets an operator point it somewhere else.
-  const base = (process.env.MEDIA_URL || "http://autumn:14704").replace(/\/+$/, "");
-  const target = new URL(`${base}/avatars/${encodeURIComponent(id)}`);
+  const target = new URL(`${mediaBase()}/avatars/${encodeURIComponent(id)}`);
   const client = target.protocol === "https:" ? https : http;
 
   const upstream = client.get(target, (proxied) => {

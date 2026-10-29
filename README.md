@@ -154,17 +154,20 @@ Self-hosting Stoat using Docker
   tabs — *Members*, *Roles* and *Settings* — and is where a server is
   actually administered:
   - **Members**: the roster with avatars, account tags, join dates, the
-    per-server nickname and role chips, a live filter, and an *add* list that
-    searches every account of the instance (`username#tag` or a fragment of
-    the name/display name) and drops the one you pick into the server. Selecting
-    a member opens their editor: the **nickname used on this server** (empty
-    means the usual name; validated like a display name) and the **roles they
-    hold**, plus *remove from server*. Everything is written as an ordinary
-    `MemberUpdate` / `MemberJoin` / `MemberLeave` event, so connected clients
-    see it immediately.
-  - **Roles**: create a role with a name, colour and rank, see how many
-    members hold it, and delete it — deleting also strips the role off every
-    member, so nobody is left holding a role the client cannot render.
+    per-server nickname and role chips, a live filter, and an *add* list on
+    the right pane that searches every account of the instance
+    (`username#tag` or a fragment of the name/display name) and drops the one
+    you pick into the server. Selecting a member opens their editor in the
+    same pane: the **nickname used on this server** (empty means the usual
+    name; validated like a display name), the **roles they hold**, their
+    **server avatar**, and *remove from server*. Everything is written as an
+    ordinary `MemberUpdate` / `MemberJoin` / `MemberLeave` event, so connected
+    clients see it immediately.
+  - **Roles**: the role list on the left chooses a role; the right pane
+    creates a new one or edits the selected one — name, colour (swatches plus
+    a colour input), rank, the members who hold it, and deletion. Deleting
+    also strips the role off every member, so nobody is left holding a role
+    the client cannot render.
   - **Settings**: rename/describe the server (name 1–32 chars, description up
     to 1024 — the same rules as `DataEditServer`, published as `ServerUpdate`
     on the server channel), the channel/member/role counts, and **deletion
@@ -176,7 +179,19 @@ Self-hosting Stoat using Docker
     instead of erroring into it.
   - Avatars are proxied through the panel (`…/members/:id/avatar`, served
     from the media container), so they render under the panel's own CSP and
-    path prefix without exposing the file server to the browser.
+    path prefix without exposing the file server to the browser. A member's
+    **server avatar** can also be replaced from the editor: the browser sends
+    the raw image, the panel crops it to a centre square, scales it to 256 px
+    and stores it as a JPEG in the media container, so no image library (and
+    no growing dependency list) is needed.
+  - Each tab is its own two-pane layout: the roster (or role list) on the
+    left scrolls on its own, the add form, editor, role card or settings form
+    on the right scrolls on its own, and neither pushes the page around.
+    Long names and `Deleted account` wrap instead of spilling out of their
+    buttons, and the server name in the header is clamped to two lines.
+    Deleting a server happens in its own small dialog that asks you to type
+    the name (with a copy button) — the form itself no longer carries a
+    confirmation field.
 - The UI is **fully multilingual — all 69 Stoat languages**, picked from a
   dropdown on the login card and in the sidebar (persisted in `localStorage`,
   otherwise matched from the browser language: exact code, then sensible
@@ -218,9 +233,9 @@ Self-hosting Stoat using Docker
 example stays universal — the tags move together whenever a release is pushed.
 Pinned tags are published next to them for reproducible deploys: the backend
 images from `v0.1.0` (`v0.1.0-api`, …, `v0.1.0-voice-ingress`) and the web
-image from the `for-web` fork (`v0.1.7-web`). Swap any `latest-*` tag for its
+image from the `for-web` fork (`v0.1.8-web`). Swap any `latest-*` tag for its
 pinned counterpart when you want a reproducible deploy. The admin panel is
-versioned on its own and published as `v0.0.7` alongside `latest`.
+versioned on its own and published as `v0.0.8` alongside `latest`.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
 fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.

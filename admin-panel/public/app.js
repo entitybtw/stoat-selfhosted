@@ -127,6 +127,7 @@ const I18N = {
     delete_warn:
       "Удаление сервера необратимо: каналы, сообщения, участники и роли будут удалены.",
     delete_ph: "Введите название сервера для подтверждения",
+    delete_q: "Сервер «{s}» и все его данные будут удалены безвозвратно.",
     deleting: "Удаление…",
     t_deleted: "Сервер удалён: каналов {c}, сообщений {m}, участников {n}",
 
@@ -170,6 +171,34 @@ const I18N = {
     err_invalid_roles: "Некорректный список ролей",
     err_invalid_role_name: "Название роли: 1–32 символа",
     err_too_many_roles: "Слишком много ролей (максимум 100)",
+
+    /* drawer: split panes, avatar editing, role detail */
+    cancel: "Отмена",
+    delete_confirm_label: "Введите название сервера, чтобы подтвердить",
+    copy_name: "Скопировать",
+    chip_members: "Участников: {n}",
+    chip_roles: "Ролей: {n}",
+    chip_owner: "Владелец: {u}",
+    m_add_search_ph: "Имя или username#0000",
+    back_to_add: "К поиску участников",
+    m_owner_note: "Владелец сервера — его нельзя удалить",
+    remove_short: "Удалить из сервера",
+    member_deleted_account: "Аккаунт удалён",
+    roles_default_name: "Роль {n}",
+    role_rank_short: "#{r}",
+    role_rank_hint: "Больший ранг показывает роль выше в списке.",
+    roles_holders_title: "У кого эта роль",
+    roles_no_holders: "Пока ни у кого",
+    roles_none_create: "Создать первую роль",
+    role_edit_title: "Изменить роль…",
+    avatar_change: "Сменить аватар на сервере",
+    t_avatar_saved: "Аватар обновлён",
+    err_avatar_not_found: "Файл аватара не найден",
+    err_invalid_avatar: "Некорректный файл аватара",
+    err_media_unavailable: "Хранилище файлов недоступно, попробуйте позже",
+    err_invalid_image: "Эту картинку не прочитать. Подойдёт JPEG или PNG.",
+    err_empty_file: "Файл пустой",
+    err_file_too_large: "Файл больше 12 МБ",
 
     err_network: "Нет соединения с сервером",
     err_internal: "Внутренняя ошибка сервера",
@@ -324,6 +353,7 @@ const I18N = {
     delete_warn:
       "Deleting a server is irreversible: channels, messages, members and roles will be removed.",
     delete_ph: "Type the server name to confirm",
+    delete_q: "The server “{s}” and all of its data will be gone for good.",
     deleting: "Deleting…",
     t_deleted: "Server deleted: {c} channels, {m} messages, {n} members",
 
@@ -368,6 +398,34 @@ const I18N = {
     err_invalid_roles: "Invalid role list",
     err_invalid_role_name: "Role name: 1–32 characters",
     err_too_many_roles: "Too many roles (100 at most)",
+
+    /* drawer: split panes, avatar editing, role detail */
+    cancel: "Cancel",
+    delete_confirm_label: "Type the server name to confirm",
+    copy_name: "Copy",
+    chip_members: "Members: {n}",
+    chip_roles: "Roles: {n}",
+    chip_owner: "Owner: {u}",
+    m_add_search_ph: "Name or username#0000",
+    back_to_add: "Back to adding members",
+    m_owner_note: "This is the server owner and cannot be removed",
+    remove_short: "Remove from server",
+    member_deleted_account: "Deleted account",
+    roles_default_name: "Role {n}",
+    role_rank_short: "#{r}",
+    role_rank_hint: "A higher rank shows the role further up the list.",
+    roles_holders_title: "Who has this role",
+    roles_no_holders: "Nobody yet",
+    roles_none_create: "Create the first role",
+    role_edit_title: "Edit role…",
+    avatar_change: "Change the avatar on this server",
+    t_avatar_saved: "Avatar updated",
+    err_avatar_not_found: "Avatar file not found",
+    err_invalid_avatar: "Invalid avatar file",
+    err_media_unavailable: "File storage is unavailable, try again later",
+    err_invalid_image: "This image cannot be read. JPEG or PNG will work.",
+    err_empty_file: "The file is empty",
+    err_file_too_large: "The file is larger than 12 MB",
 
     err_network: "Cannot reach the server",
     err_internal: "Internal server error",
@@ -1758,39 +1816,57 @@ function paintServers(data) {
 
 /* ---------- server drawer ------------------------------------------------ */
 
-/* One server, opened from the servers table. Identity and editing on the
-   left, the member roster on the right. Everything that used to be a
-   "rename + delete" dialog lives here now, because managing a server means
-   managing who is in it — and that needs room for a list. */
+/* One server, opened from the servers table.
+   Each tab is a layout of its own: the roster and the editor are two panes
+   that scroll independently, so nothing ever slides under the header and
+   the page never grows a second scrollbar. */
 
 const drawerSeq = { current: null };
 /** Where the open drawer lives, so avatars can be fetched through it. */
 let drawerServerId = null;
+/** The role detail pane: `id` null means "create a new one". */
+let roleDraft = { id: null, colour: "#5470ec", rank: 0 };
 
+/* One letter, not two: a two-letter monogram of "deleted user" reads as a
+   real name ("DE") instead of a placeholder. */
 function initials(name) {
-  const clean = String(name || "?").trim();
-  return esc(clean.slice(0, 2).toUpperCase() || "?");
+  const clean = String(name || "").trim();
+  const first = Array.from(clean)[0] || "";
+  return esc(first.toUpperCase() || "?");
 }
 
 /** Avatar via the panel's own media proxy; initials when there is none. */
-function avatarHTML(hasAvatar, name, size = 34, userId) {
-  const style = `width:${size}px;height:${size}px`;
+function avatarHTML(hasAvatar, name, size = 32, userId) {
+  const style = `--avatar-size:${size}px`;
   if (hasAvatar && userId && drawerServerId) {
     const src = url(
-      `api/servers/${drawerServerId}/members/${encodeURIComponent(userId)}/avatar`,
+      `api/servers/${drawerServerId}/members/${encodeURIComponent(userId)}/avatar?v=${avatarStamp(userId)}`,
     );
     return `<span class="avatar" style="${style}"><img src="${esc(
       src,
-    )}" alt="" loading="lazy" onerror="this.remove()" /></span>`;
+    )}" alt="" onerror="this.remove()" /></span>`;
   }
   return `<span class="avatar" style="${style}">${initials(name)}</span>`;
 }
 
+/* Bumped whenever a picture changes, so the browser drops the cached copy of
+   the proxied avatar without waiting for the one-hour max-age to run out. */
+const avatarStamps = new Map();
+function avatarStamp(userId) {
+  return avatarStamps.get(userId) || 0;
+}
+
 function roleTag(role) {
   const colour = role.colour ? ` style="color:${esc(role.colour)}"` : "";
-  return `<span class="role-tag"><span class="role-dot"${
+  return `<span class="role-tag" title="${esc(role.name)}"><span class="role-dot"${
     role.colour ? ` style="background:${esc(role.colour)}"` : ""
   }></span><span${colour}>${esc(role.name)}</span></span>`;
+}
+
+/** Short date for rows: joining in 2026 is past, the time of day is noise. */
+function fmtDay(ms) {
+  if (!ms) return "—";
+  return new Date(ms).toLocaleDateString(locale(), { dateStyle: "medium" });
 }
 
 function rolesOf(data, ids) {
@@ -1798,7 +1874,7 @@ function rolesOf(data, ids) {
   return (ids || []).map((id) => byId.get(id)).filter(Boolean);
 }
 
-/** Sort members the way the roster reads: owner first, then by name. */
+/** Owner first, then by name — the way a roster reads. */
 function sortMembers(members) {
   return [...members].sort((a, b) => {
     if (a.owner !== b.owner) return a.owner ? -1 : 1;
@@ -1811,7 +1887,13 @@ function sortMembers(members) {
 function memberMatches(member, query) {
   if (!query) return true;
   const needle = query.toLowerCase();
-  return [member.displayName, member.user && member.user.tag, member.user && member.user.username, member.id]
+  return [
+    member.displayName,
+    member.user && member.user.tag,
+    member.user && member.user.username,
+    member.user && member.user.displayName,
+    member.id,
+  ]
     .filter(Boolean)
     .some((value) => String(value).toLowerCase().includes(needle));
 }
@@ -1836,26 +1918,35 @@ async function openServer(server, deleteMode = false) {
   openServerDrawer(data);
 }
 
-/* Kept intact: deletion keeps the type-the-name confirmation, it is now a
-   small dialog of its own instead of a mode of the old big one. */
+/* Deletion keeps the type-the-name confirmation: it is the one place where
+   an admin really does have to spell something out. The name sits right
+   above the box and can be copied, so nobody retypes it by hand. */
 function openServerDelete(server) {
   closeOverlays();
   const overlay = document.createElement("div");
   overlay.className = "overlay";
   overlay.innerHTML = `
-    <div class="modal">
+    <div class="modal dialog-sm" role="dialog" aria-modal="true">
       <h2>${esc(t("delete_server"))}</h2>
-      <div class="subtitle">${esc(server.name)}</div>
+      <p class="dialog-lead">${esc(t("delete_q", { s: server.name }))}</p>
       <div class="hint note">${esc(t("delete_warn"))}</div>
       <div class="field">
-        <label>${esc(t("delete_ph"))}</label>
-        <div class="row">
-          <input type="text" id="m-confirm" />
-          <button class="btn danger" id="m-delete" type="button" disabled>${esc(t("delete"))}</button>
+        <label for="m-confirm">${esc(t("delete_confirm_label"))}</label>
+        <div class="confirm-box">
+          <span class="confirm-name" title="${esc(server.name)}">${esc(
+            server.name,
+          )}</span>
+          <button class="btn tonal small" id="m-copy" type="button">${esc(
+            t("copy_name"),
+          )}</button>
         </div>
+        <input type="text" id="m-confirm" autocomplete="off" spellcheck="false" />
       </div>
       <div class="modal-actions">
-        <button class="btn flat" id="m-close" type="button">${esc(t("close"))}</button>
+        <button class="btn flat" id="m-close" type="button">${esc(t("cancel"))}</button>
+        <button class="btn danger" id="m-delete" type="button" disabled>${esc(
+          t("delete"),
+        )}</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -1865,12 +1956,34 @@ function openServerDelete(server) {
     if (event.target === overlay) close();
   });
   overlay.querySelector("#m-close").addEventListener("click", close);
+  overlay.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") close();
+  });
 
   const confirmInput = overlay.querySelector("#m-confirm");
   const deleteButton = overlay.querySelector("#m-delete");
-  confirmInput.addEventListener("input", () => {
+  const sync = () => {
     deleteButton.disabled = confirmInput.value !== server.name;
+  };
+  confirmInput.addEventListener("input", sync);
+  overlay.querySelector("#m-copy").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(server.name);
+      confirmInput.value = server.name;
+      sync();
+      toast(t("copied"));
+    } catch {
+      // Clipboard is unavailable on plain HTTP; selecting the text is the
+      // next best thing and still saves retyping.
+      const box = overlay.querySelector(".confirm-name");
+      const range = document.createRange();
+      range.selectNodeContents(box);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
   });
+
   deleteButton.addEventListener("click", async () => {
     deleteButton.disabled = true;
     deleteButton.textContent = t("deleting");
@@ -1897,43 +2010,45 @@ function openServerDelete(server) {
 function openServerDrawer(data) {
   const seq = bump();
   drawerSeq.current = seq;
+  drawerServerId = data.id;
 
   const view = {
     tab: "members",
     query: "",
     picked: null,
-    rolesDraft: null,
-    nickname: "",
+    rolesDraft: [],
   };
+  roleDraft = { id: null, colour: "#5470ec", rank: 0 };
 
   const overlay = document.createElement("div");
-  overlay.className = "overlay";
+  overlay.className = "overlay overlay-drawer";
   overlay.innerHTML = `
-    <div class="drawer" role="dialog" aria-modal="true" aria-label="${esc(data.name)}">
-      <div class="drawer-head">
+    <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-name">
+      <header class="drawer-head">
         <div class="drawer-title">
-          <h2 id="drawer-name">${esc(data.name)}</h2>
+          <h2 id="drawer-name" title="${esc(data.name)}">${esc(data.name)}</h2>
           <div class="drawer-sub">
-            <span class="mono">${esc(data.id)}</span>
-            <span>·</span>
-            <span>${esc(t("drawer_created", { d: fmtDate(data.createdAt) }))}</span>
-            ${
-              data.ownerUser
-                ? `<span>·</span><span>${esc(t("th_owner"))}: ${esc(data.ownerUser.tag)}</span>`
-                : ""
-            }
+            <span class="chip" id="drawer-chip-members"></span>
+            <span class="chip" id="drawer-chip-roles"></span>
+            <span class="chip" id="drawer-chip-owner"></span>
           </div>
         </div>
-        <button class="btn flat small drawer-close" id="drawer-close" type="button">${esc(t("close"))}</button>
-      </div>
-      <div class="drawer-tabs" id="drawer-tabs">
-        <button class="drawer-tab active" data-tab="members" type="button">
-          ${esc(t("tab_members"))}<span class="drawer-count" id="tab-members-count">${data.members.length}</span>
+        <button class="icon-btn" id="drawer-close" type="button" aria-label="${esc(
+          t("close"),
+        )}" title="${esc(t("close"))}">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
-        <button class="drawer-tab" data-tab="roles" type="button">
-          ${esc(t("tab_roles"))}<span class="drawer-count" id="tab-roles-count">${data.roles.length}</span>
+      </header>
+      <div class="drawer-tabs" id="drawer-tabs" role="tablist">
+        <button class="drawer-tab active" data-tab="members" role="tab" type="button">
+          ${esc(t("tab_members"))}<span class="drawer-count" id="tab-members-count"></span>
         </button>
-        <button class="drawer-tab" data-tab="settings" type="button">${esc(t("tab_settings"))}</button>
+        <button class="drawer-tab" data-tab="roles" role="tab" type="button">
+          ${esc(t("tab_roles"))}<span class="drawer-count" id="tab-roles-count"></span>
+        </button>
+        <button class="drawer-tab" data-tab="settings" role="tab" type="button">${esc(
+          t("tab_settings"),
+        )}</button>
       </div>
       <div class="drawer-body" id="drawer-body"></div>
     </div>`;
@@ -1949,6 +2064,10 @@ function openServerDrawer(data) {
     if (event.target === overlay) close();
   });
   overlay.querySelector("#drawer-close").addEventListener("click", close);
+  overlay.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !document.querySelector(".overlay:not(.overlay-drawer)"))
+      close();
+  });
 
   overlay.querySelectorAll("[data-tab]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1962,17 +2081,27 @@ function openServerDrawer(data) {
 
   const bodyOf = () => overlay.querySelector("#drawer-body");
 
-  drawerServerId = data.id;
-
   function setData(next) {
     data = next;
     const nameEl = overlay.querySelector("#drawer-name");
-    if (nameEl) nameEl.textContent = data.name;
-    const members = overlay.querySelector("#tab-members-count");
-    if (members) members.textContent = data.members.length;
-    const roles = overlay.querySelector("#tab-roles-count");
-    if (roles) roles.textContent = data.roles.length;
+    if (nameEl) {
+      nameEl.textContent = data.name;
+      nameEl.title = data.name;
+    }
+    const chip = (id, text) => {
+      const el = overlay.querySelector(id);
+      if (el) el.textContent = text;
+    };
+    chip("#drawer-chip-members", t("chip_members", { n: data.members.length }));
+    chip("#drawer-chip-roles", t("chip_roles", { n: data.roles.length }));
+    chip(
+      "#drawer-chip-owner",
+      data.ownerUser ? t("chip_owner", { u: data.ownerUser.tag }) : "",
+    );
+    chip("#tab-members-count", data.members.length);
+    chip("#tab-roles-count", data.roles.length);
   }
+  setData(data);
 
   async function refresh() {
     const mine = bump();
@@ -1990,113 +2119,125 @@ function openServerDrawer(data) {
   function paintTab() {
     const body = bodyOf();
     if (!body) return;
-    if (view.tab === "members") paintMembers(body);
+    const pick = view.picked && data.members.find((m) => m.id === view.picked);
+    if (!pick) view.picked = null;
+    if (view.tab === "members") paintMembers(body, pick);
     else if (view.tab === "roles") paintRoles(body);
     else paintSettings(body);
   }
 
-  /* ---- members ---- */
+  function goTab(tab) {
+    view.tab = tab;
+    overlay
+      .querySelectorAll("[data-tab]")
+      .forEach((node) => node.classList.toggle("active", node.dataset.tab === tab));
+    paintTab();
+  }
 
-  function paintMembers(body) {
-    body.classList.remove("single");
-    const members = sortMembers(data.members);
-    const shown = members.filter((member) => memberMatches(member, view.query));
-    const picked = data.members.find((member) => member.id === view.picked);
+  /* ---- members -------------------------------------------------------- */
 
+  function paintMembers(body, picked) {
+    body.className = "drawer-body split";
     body.innerHTML = `
-      <div class="drawer-side">
-        <div class="drawer-panel">
-          <div class="drawer-panel-title">${esc(t("m_add_title"))}</div>
-          <div class="pick-list" id="m-add-results">
-            <div class="drawer-note">${esc(t("m_add_hint"))}</div>
-          </div>
-        </div>
-        ${
-          picked
-            ? memberEditorHTML(picked)
-            : `<div class="drawer-panel"><div class="drawer-note">${esc(t("m_pick_hint"))}</div></div>`
-        }
-      </div>
-      <div class="drawer-main">
-        <div class="drawer-toolbar">
-          <input class="search" id="m-search" type="text" placeholder="${esc(
+      <section class="pane pane-list">
+        <div class="pane-head">
+          <input class="pane-search" id="m-search" type="search" placeholder="${esc(
             t("m_search_ph"),
-          )}" value="${esc(view.query)}" />
+          )}" value="${esc(view.query)}" autocomplete="off" />
         </div>
-        <div class="member-list" id="m-member-list">
-          ${
-            shown.length
-              ? shown.map(memberRowHTML).join("")
-              : `<div class="drawer-note">${esc(t("empty"))}</div>`
-          }
-        </div>
-      </div>`;
-
-    wireMemberList(body);
-    wireAddPicker(body);
-    if (picked) wireMemberEditor(body, picked);
+        <div class="pane-scroll" id="m-member-list"></div>
+      </section>
+      <section class="pane pane-detail" id="m-detail"></section>`;
+    paintMemberList(body);
+    paintDetail(body, picked);
+    wireAddPane(body);
   }
 
   function memberRowHTML(member) {
-    const tags = rolesOf(data, member.roles).map(roleTag).join("");
-    const sub =
-      member.nickname && member.user && member.nickname !== member.user.username
-        ? `${esc(member.user.tag)} · ${esc(t("m_joined", { d: fmtDate(member.joinedAt) }))}`
-        : `${esc(member.user ? member.user.tag : member.id)} · ${esc(
-            t("m_joined", { d: fmtDate(member.joinedAt) }),
-          )}`;
+    const roles = rolesOf(data, member.roles);
+    const tags = roles.slice(0, 2).map(roleTag).join("");
+    const more =
+      roles.length > 2 ? `<span class="role-tag">+${roles.length - 2}</span>` : "";
+    const also =
+      member.user && member.user.displayName && member.nickname
+        ? `<span class="member-meta-dim">${esc(member.user.displayName)}</span>`
+        : "";
     return `
       <button class="member-row ${view.picked === member.id ? "picked" : ""}" data-member="${esc(
         member.id,
       )}" type="button">
-        ${avatarHTML(member.hasAvatar, member.displayName, 34, member.id)}
+        ${avatarHTML(member.hasAvatar, member.displayName, 32, member.id)}
         <span class="member-main">
           <span class="member-name">
-            <span>${esc(member.displayName || member.id)}</span>
+            <span class="member-name-text">${esc(member.displayName || member.id)}</span>
             ${
               member.owner
-                ? `<span class="badge admin">${esc(t("m_owner"))}</span>`
+                ? `<span class="badge admin owner-badge">${esc(t("m_owner"))}</span>`
                 : ""
             }
           </span>
-          <span class="member-meta">${sub}</span>
-          ${tags ? `<span class="role-tags">${tags}</span>` : ""}
+          <span class="member-sub">${also}</span>
+          ${tags ? `<span class="member-meta">${tags}${more}</span>` : ""}
         </span>
+        <span class="member-since">${esc(fmtDay(member.joinedAt))}</span>
       </button>`;
   }
 
-  function wireMemberList(body) {
-    const search = body.querySelector("#m-search");
-    if (search) {
-      search.addEventListener("input", () => {
-        view.query = search.value;
-        const list = body.querySelector("#m-member-list");
-        if (!list) return;
-        const shown = sortMembers(data.members).filter((member) =>
-          memberMatches(member, view.query),
-        );
-        list.innerHTML = shown.length
-          ? shown.map(memberRowHTML).join("")
-          : `<div class="drawer-note">${esc(t("empty"))}</div>`;
-        list.querySelectorAll("[data-member]").forEach((row) => {
-          row.addEventListener("click", () => pick(row.dataset.member));
-        });
-      });
-    }
-    body.querySelectorAll("[data-member]").forEach((row) => {
+  function paintMemberList(body) {
+    const list = body.querySelector("#m-member-list");
+    if (!list) return;
+    const shown = sortMembers(data.members).filter((member) =>
+      memberMatches(member, view.query),
+    );
+    list.innerHTML = shown.length
+      ? shown.map(memberRowHTML).join("")
+      : `<div class="pane-empty">${esc(t("empty"))}</div>`;
+    list.querySelectorAll("[data-member]").forEach((row) => {
       row.addEventListener("click", () => pick(row.dataset.member));
     });
   }
 
   function pick(id) {
-    view.picked = view.picked === id ? null : id;
-    const member = data.members.find((entry) => entry.id === id);
-    view.nickname = (member && member.nickname) || "";
+    const next = view.picked === id ? null : id;
+    view.picked = next;
+    const member = next ? data.members.find((entry) => entry.id === next) : null;
     view.rolesDraft = member ? [...member.roles] : [];
-    paintTab();
+    const body = bodyOf();
+    if (!body) return;
+    paintMemberList(body);
+    paintDetail(body, member);
   }
 
-  function wireAddPicker(body) {
+  /**
+   * Add, search and edit share the right-hand pane: searching there offers
+   * the accounts that are not in the server yet, so adding somebody is a
+   * search and one click, never a separate form off to the side.
+   */
+  function paintDetail(body, picked) {
+    const detail = body.querySelector("#m-detail");
+    if (!detail) return;
+    detail.innerHTML = picked ? memberEditorHTML(picked) : addPaneHTML();
+    if (picked) wireMemberEditor(body, picked);
+    else wireAddPane(body);
+  }
+
+  function addPaneHTML() {
+    return `
+      <div class="pane-head">
+        <input class="pane-search" id="m-add-q" type="search" placeholder="${esc(
+          t("m_add_search_ph"),
+        )}" value="${esc(view.query)}" autocomplete="off" />
+      </div>
+      <div class="pane-scroll">
+        <div class="pick-list" id="m-add-results">
+          <div class="pane-empty">${esc(t("loading"))}</div>
+        </div>
+        <div class="pane-note">${esc(t("m_pick_hint"))}</div>
+      </div>`;
+  }
+
+  function wireAddPane(body) {
+    const input = body.querySelector("#m-add-q");
     const results = body.querySelector("#m-add-results");
     if (!results) return;
 
@@ -2105,7 +2246,7 @@ function openServerDrawer(data) {
       const query = (view.query || "").trim();
       try {
         const found = await api(
-          `api/servers/${data.id}/members?q=${encodeURIComponent(query || "")}`,
+          `api/servers/${data.id}/members?q=${encodeURIComponent(query)}`,
         );
         if (drawerSeq.current !== seq || !results.isConnected) return;
         const free = found.items.filter((user) => !user.member);
@@ -2114,36 +2255,52 @@ function openServerDrawer(data) {
               .map(
                 (user) => `
                 <div class="search-hit">
-                  ${avatarHTML(Boolean(user.avatarId), user.displayName || user.username, 28, user.id)}
+                  ${avatarHTML(
+                    Boolean(user.avatarId),
+                    user.displayName || user.username,
+                    30,
+                    user.id,
+                  )}
                   <span class="member-main">
-                    <span class="member-name"><span>${esc(
-                      user.displayName || user.username,
-                    )}</span></span>
-                    <span class="member-meta">${esc(user.tag)}</span>
+                    <span class="member-name">
+                      <span class="member-name-text">${esc(
+                        user.displayName || user.username,
+                      )}</span>
+                    </span>
+                    <span class="member-sub">${esc(user.tag)}</span>
                   </span>
-                  <button class="btn tonal small" data-add="${esc(user.id)}" type="button">${esc(
-                    t("m_add"),
-                  )}</button>
+                  <button class="btn tonal small" data-add="${esc(
+                    user.id,
+                  )}" type="button">${esc(t("m_add"))}</button>
                 </div>`,
               )
               .join("")
-          : `<div class="drawer-note">${esc(t("m_add_none"))}</div>`;
+          : `<div class="pane-empty">${esc(
+              query ? t("empty") : t("m_add_none"),
+            )}</div>`;
         results.querySelectorAll("[data-add]").forEach((button) => {
-          button.addEventListener("click", () => addMember(button.dataset.add, button));
+          button.addEventListener("click", () =>
+            addMember(button.dataset.add, button),
+          );
         });
       } catch (err) {
         if (drawerSeq.current !== seq) return;
-        results.innerHTML = `<div class="drawer-note">${esc(errText(err))}</div>`;
+        results.innerHTML = `<div class="pane-empty">${esc(errText(err))}</div>`;
       }
     };
     const schedule = () => {
       clearTimeout(timer);
-      timer = setTimeout(run, 250);
+      timer = setTimeout(run, 200);
     };
-    // The roster search drives the "add" list too: typing a name narrows
-    // both, which is what an admin is doing when they type in that box.
-    const search = body.querySelector("#m-search");
-    if (search) search.addEventListener("input", schedule);
+    if (input) {
+      input.addEventListener("input", () => {
+        view.query = input.value;
+        const list = body.querySelector("#m-search");
+        if (list) list.value = view.query;
+        paintMemberList(body);
+        schedule();
+      });
+    }
     run();
   }
 
@@ -2155,6 +2312,10 @@ function openServerDrawer(data) {
         body: { user_id: id },
       });
       toast(t("t_member_added"));
+      // Straight into the editor of the new member, so roles can be handed
+      // out right away instead of making another trip through the list.
+      view.picked = id;
+      view.query = "";
       await refresh();
     } catch (err) {
       toast(errText(err), true);
@@ -2164,101 +2325,199 @@ function openServerDrawer(data) {
 
   function memberEditorHTML(member) {
     const roles = rolesOf(data, member.roles);
+    const account = member.user || {};
+    const removed = !member.user;
     return `
-      <div class="drawer-panel">
-        <div class="drawer-panel-title">${esc(t("m_edit_title"))}</div>
-        <div class="search-hit" style="background:transparent;padding:0 0 10px">
-          ${avatarHTML(member.hasAvatar, member.displayName, 34, member.id)}
-          <span class="member-main">
-            <span class="member-name"><span>${esc(member.displayName || member.id)}</span></span>
-            <span class="member-meta">${esc(member.user ? member.user.tag : member.id)}</span>
-          </span>
+      <div class="pane-head edit-head">
+        <button class="avatar-btn" id="m-avatar" type="button" title="${esc(
+          t("avatar_change"),
+        )}" aria-label="${esc(t("avatar_change"))}">
+          ${avatarHTML(member.hasAvatar, member.displayName, 48, member.id)}
+          <span class="avatar-badge"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
+        </button>
+        <input type="file" id="m-avatar-file" accept="image/png,image/jpeg,image/webp" hidden />
+        <div class="edit-who">
+          <div class="edit-name" title="${esc(member.displayName || member.id)}">${esc(
+            member.displayName || member.id,
+          )}</div>
+          <div class="edit-sub">${esc(
+            removed ? t("member_deleted_account") : account.tag || member.id,
+          )}</div>
         </div>
-        <div class="field">
-          <label>${esc(t("f_nickname"))}</label>
-          <input type="text" id="m-nickname" maxlength="32" placeholder="${esc(
-            (member.user && (member.user.displayName || member.user.username)) || "",
-          )}" value="${esc(member.nickname || "")}" />
-          <div class="hint note">${esc(t("nickname_hint"))}</div>
-        </div>
-        <div class="field">
-          <label>${esc(t("f_roles"))}</label>
-          <div class="pick-list" id="m-role-picks">
-            ${
-              data.roles.length
-                ? data.roles
-                    .map(
-                      (role) => `
-                      <button class="role-pick ${
-                        view.rolesDraft.includes(role.id) ? "on" : ""
-                      }" data-role="${esc(role.id)}" type="button" aria-pressed="${
-                        view.rolesDraft.includes(role.id) ? "true" : "false"
-                      }">
-                        <span class="role-dot"${
-                          role.colour ? ` style="background:${esc(role.colour)}"` : ""
-                        }></span>
-                        <span>${esc(role.name)}</span>
-                        <span class="rank">#${role.rank}</span>
-                      </button>`,
-                    )
-                    .join("")
-                : `<div class="drawer-note">${esc(t("roles_none"))}</div>`
-            }
-          </div>
-          <div class="hint" id="m-role-hint"></div>
-        </div>
-        <div class="row end" style="gap:8px">
+        <button class="icon-btn" id="m-unpick" type="button" aria-label="${esc(
+          t("back_to_add"),
+        )}" title="${esc(t("back_to_add"))}">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+
+      <div class="pane-scroll edit-body">
+        <label class="edit-label" for="m-nickname">${esc(t("f_nickname"))}</label>
+        <input class="edit-input" type="text" id="m-nickname" maxlength="32"
+          placeholder="${esc(removed ? member.id : account.displayName || account.username || "")}"
+          value="${esc(member.nickname || "")}" autocomplete="off" />
+        <div class="edit-hint">${esc(t("nickname_hint"))}</div>
+
+        <div class="edit-label">${esc(t("f_roles"))}</div>
+        <div class="pick-list role-picks" id="m-role-picks">
           ${
-            member.owner
-              ? ""
-              : `<button class="btn danger small" id="m-remove" type="button">${esc(
-                  t("m_remove"),
-                )}</button>`
+            data.roles.length
+              ? data.roles
+                  .map(
+                    (role) => `
+                    <button class="role-pick ${
+                      view.rolesDraft.includes(role.id) ? "on" : ""
+                    }" data-role="${esc(role.id)}" type="button" aria-pressed="${
+                      view.rolesDraft.includes(role.id) ? "true" : "false"
+                    }">
+                      <span class="role-check"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>
+                      <span class="role-dot"${
+                        role.colour ? ` style="background:${esc(role.colour)}"` : ""
+                      }></span>
+                      <span class="role-name">${esc(role.name)}</span>
+                    </button>`,
+                  )
+                  .join("")
+              : `<button class="role-pick add-role" id="m-go-roles" type="button">
+                  <span class="role-check">+</span>
+                  <span class="role-name">${esc(t("roles_none_create"))}</span>
+                </button>`
           }
-          <button class="btn primary small" id="m-save-member" type="button">${esc(
-            t("save"),
-          )}</button>
         </div>
-        ${roles.length ? `<div class="role-tags" style="margin-top:8px">${roles.map(roleTag).join("")}</div>` : ""}
-      </div>`;
+        <div class="edit-hint error" id="m-role-hint"></div>
+
+        <div class="edit-meta">
+          <span>${esc(t("m_joined", { d: fmtDate(member.joinedAt) }))}</span>
+          ${roles.length ? `<span class="role-tags">${roles.map(roleTag).join("")}</span>` : ""}
+        </div>
+      </div>
+
+      <footer class="pane-foot">
+        ${
+          member.owner
+            ? `<span class="pane-note">${esc(t("m_owner_note"))}</span>`
+            : `<button class="btn danger small" id="m-remove" type="button">${esc(
+                t("remove_short"),
+              )}</button>`
+        }
+        <button class="btn primary" id="m-save-member" type="button">${esc(t("save"))}</button>
+      </footer>`;
   }
 
   function wireMemberEditor(body, member) {
+    const nickname = body.querySelector("#m-nickname");
+    const save = body.querySelector("#m-save-member");
+    const hint = body.querySelector("#m-role-hint");
+
+    const sync = () => {
+      const rolesChanged =
+        [...view.rolesDraft].sort().join() !==
+        [...(member.roles || [])].sort().join();
+      const nickChanged =
+        (nickname.value.trim() || null) !== (member.nickname || null);
+      save.disabled = !rolesChanged && !nickChanged;
+    };
+    sync();
+    nickname.addEventListener("input", sync);
+    nickname.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !save.disabled) save.click();
+    });
+
     body.querySelectorAll("#m-role-picks [data-role]").forEach((button) => {
       button.addEventListener("click", () => {
         const id = button.dataset.role;
-        if (view.rolesDraft.includes(id))
-          view.rolesDraft = view.rolesDraft.filter((role) => role !== id);
-        else view.rolesDraft = [...view.rolesDraft, id];
-        button.classList.toggle("on", view.rolesDraft.includes(id));
-        button.setAttribute("aria-pressed", view.rolesDraft.includes(id) ? "true" : "false");
+        view.rolesDraft = view.rolesDraft.includes(id)
+          ? view.rolesDraft.filter((role) => role !== id)
+          : [...view.rolesDraft, id];
+        const on = view.rolesDraft.includes(id);
+        button.classList.toggle("on", on);
+        button.setAttribute("aria-pressed", on ? "true" : "false");
+        sync();
       });
     });
 
-    const save = body.querySelector("#m-save-member");
-    if (save) {
-      save.addEventListener("click", async () => {
-        const nickname = body.querySelector("#m-nickname").value.trim();
-        const hint = body.querySelector("#m-role-hint");
-        save.disabled = true;
+    const goRoles = body.querySelector("#m-go-roles");
+    if (goRoles) goRoles.addEventListener("click", () => goTab("roles"));
+
+    save.addEventListener("click", async () => {
+      hint.textContent = "";
+      save.disabled = true;
+      try {
+        await api(`api/servers/${data.id}/members/${member.id}`, {
+          method: "POST",
+          body: {
+            nickname: nickname.value.trim() || null,
+            roles: view.rolesDraft,
+          },
+        });
+        toast(t("t_member_saved"));
+        await refresh();
+      } catch (err) {
+        hint.textContent = errText(err);
+        sync();
+      }
+    });
+
+    body.querySelector("#m-unpick").addEventListener("click", () => pick(member.id));
+
+    /* ---- server avatar ---------------------------------------------- */
+
+    const fileInput = body.querySelector("#m-avatar-file");
+    const avatarButton = body.querySelector("#m-avatar");
+    avatarButton.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      if (file.size > 12 * 1024 * 1024) {
+        toast(t("err_file_too_large"), true);
+        fileInput.value = "";
+        return;
+      }
+      avatarButton.classList.add("busy");
+      try {
+        const bytes = await file.arrayBuffer();
+        // Raw body, not JSON: the panel crops and re-encodes it server-side.
+        const res = await fetch(
+          url(
+            `api/servers/${data.id}/members/${encodeURIComponent(member.id)}/avatar`,
+          ),
+          {
+            method: "PUT",
+            headers: { "Content-Type": file.type || "application/octet-stream" },
+            body: bytes,
+          },
+        );
+        let payload = null;
         try {
-          await api(`api/servers/${data.id}/members/${member.id}`, {
-            method: "POST",
-            body: { nickname: nickname || null, roles: view.rolesDraft },
-          });
-          toast(t("t_member_saved"));
-          await refresh();
-        } catch (err) {
-          if (hint) hint.textContent = errText(err);
-          save.disabled = false;
+          payload = await res.json();
+        } catch {
+          /* empty body */
         }
-      });
-    }
+        if (!res.ok) {
+          const error = new Error((payload && payload.error) || `HTTP ${res.status}`);
+          if (payload && payload.code) error.code = payload.code;
+          throw error;
+        }
+        member.hasAvatar = true;
+        avatarStamps.set(member.id, Date.now());
+        toast(t("t_avatar_saved"));
+        await refresh();
+      } catch (err) {
+        toast(errText(err), true);
+      } finally {
+        avatarButton.classList.remove("busy");
+        fileInput.value = "";
+      }
+    });
 
     const remove = body.querySelector("#m-remove");
     if (remove) {
       remove.addEventListener("click", async () => {
-        if (!window.confirm(t("confirm_member_remove", { u: member.displayName || member.id })))
+        if (
+          !window.confirm(
+            t("confirm_member_remove", { u: member.displayName || member.id }),
+          )
+        )
           return;
         remove.disabled = true;
         try {
@@ -2276,38 +2535,41 @@ function openServerDrawer(data) {
     }
   }
 
-  /* ---- roles ---- */
+  /* ---- roles ---------------------------------------------------------- */
+
+  const ROLE_COLOURS = [
+    "#f43f5e",
+    "#f97316",
+    "#eab308",
+    "#22c55e",
+    "#06b6d4",
+    "#5470ec",
+    "#a855f7",
+    "#ec4899",
+  ];
+
+  function nextRoleName() {
+    const taken = new Set(data.roles.map((role) => role.name));
+    for (let index = 1; index < 1000; index += 1) {
+      const name = t("roles_default_name", { n: index });
+      if (!taken.has(name)) return name;
+    }
+    return "";
+  }
 
   function paintRoles(body) {
-    body.classList.add("single");
+    body.className = "drawer-body split";
+    const editing = data.roles.find((role) => role.id === roleDraft.id);
     body.innerHTML = `
-      <div class="drawer-side" style="max-width:520px">
-        <div class="drawer-panel">
-          <div class="drawer-panel-title">${esc(t("roles_new"))}</div>
-          <div class="field">
-            <label>${esc(t("f_role_name"))}</label>
-            <input type="text" id="r-name" maxlength="32" />
-          </div>
-          <div class="grid2">
-            <div class="field">
-              <label>${esc(t("f_role_colour"))}</label>
-              <input class="color-input" type="color" id="r-colour" value="#5470ec" />
-            </div>
-            <div class="field">
-              <label>${esc(t("f_role_rank"))}</label>
-              <input type="number" id="r-rank" min="0" max="999" value="0" />
-            </div>
-          </div>
-          <div class="hint" id="r-hint"></div>
-          <div class="row end">
-            <button class="btn primary small" id="r-create" type="button">${esc(
-              t("roles_create"),
-            )}</button>
-          </div>
+      <section class="pane pane-list">
+        <div class="pane-head">
+          <span class="pane-title">${esc(t("tab_roles"))}</span>
+          <button class="btn tonal small" id="r-new" type="button">${esc(
+            t("roles_create"),
+          )}</button>
         </div>
-        <div class="drawer-panel">
-          <div class="drawer-panel-title">${esc(t("tab_roles"))}</div>
-          <div class="member-list">
+        <div class="pane-scroll">
+          <div class="member-list" id="r-list">
             ${
               data.roles.length
                 ? data.roles
@@ -2316,112 +2578,261 @@ function openServerDrawer(data) {
                         member.roles.includes(role.id),
                       ).length;
                       return `
-                        <div class="member-row" style="cursor:default">
-                          <span class="role-dot"${
+                        <button class="member-row ${role.id === roleDraft.id ? "picked" : ""}" data-open-role="${esc(
+                          role.id,
+                        )}" type="button">
+                          <span class="avatar role-avatar"${
                             role.colour ? ` style="background:${esc(role.colour)}"` : ""
-                          }></span>
+                          }>${esc((role.name || "#").slice(0, 1).toUpperCase())}</span>
                           <span class="member-main">
-                            <span class="member-name"><span>${esc(role.name)}</span></span>
-                            <span class="member-meta">${esc(
+                            <span class="member-name"><span class="member-name-text">${esc(
+                              role.name,
+                            )}</span></span>
+                            <span class="member-sub">${esc(
                               t("roles_holders", { n: holders }),
-                            )} · #${role.rank}</span>
+                            )}</span>
                           </span>
-                          <button class="btn danger small" data-del-role="${esc(
-                            role.id,
-                          )}" type="button">${esc(t("delete"))}</button>
-                        </div>`;
+                          <span class="role-rank">${esc(
+                            t("role_rank_short", { r: role.rank }),
+                          )}</span>
+                        </button>`;
                     })
                     .join("")
-                : `<div class="drawer-note">${esc(t("roles_none"))}</div>`
+                : `<div class="pane-empty">${esc(t("roles_none"))}</div>`
             }
           </div>
         </div>
-      </div>`;
+      </section>
+      <section class="pane pane-detail" id="r-detail"></section>`;
+    body.querySelectorAll("[data-open-role]").forEach((row) => {
+      row.addEventListener("click", () => {
+        const id = row.dataset.openRole;
+        if (roleDraft.id === id) {
+          roleDraft = { id: null, colour: "#5470ec", rank: 0 };
+        } else {
+          const role = data.roles.find((entry) => entry.id === id);
+          roleDraft = { id, colour: role.colour || "#5470ec", rank: role.rank || 0 };
+        }
+        paintRoles(body);
+      });
+    });
+    body.querySelector("#r-new").addEventListener("click", () => {
+      roleDraft = { id: null, colour: "#5470ec", rank: 0 };
+      paintRoles(body);
+    });
+    paintRoleDetail(body, editing);
+  }
 
-    const create = body.querySelector("#r-create");
-    create.addEventListener("click", async () => {
-      const hint = body.querySelector("#r-hint");
+  function paintRoleDetail(body, editing) {
+    const detail = body.querySelector("#r-detail");
+    if (!detail) return;
+    const holders = editing
+      ? data.members.filter((member) => member.roles.includes(editing.id))
+      : [];
+
+    detail.innerHTML = `
+      <div class="pane-head">
+        <span class="pane-title">${
+          editing ? esc(t("role_edit_title")) : esc(t("roles_new"))
+        }</span>
+      </div>
+      <div class="pane-scroll edit-body">
+        <label class="edit-label" for="r-name">${esc(t("f_role_name"))}</label>
+        <input class="edit-input" type="text" id="r-name" maxlength="32"
+          value="${esc(editing ? editing.name : nextRoleName())}" autocomplete="off" />
+
+        <div class="edit-label">${esc(t("f_role_colour"))}</div>
+        <div class="swatches" id="r-swatches">
+          ${ROLE_COLOURS.map(
+            (colour) => `
+            <button class="swatch ${colour === roleDraft.colour ? "on" : ""}" data-colour="${colour}"
+              type="button" style="--swatch:${colour}" aria-label="${colour}"
+              aria-pressed="${colour === roleDraft.colour}"></button>`,
+          ).join("")}
+          <label class="swatch custom" title="${esc(t("f_role_colour"))}">
+            <input type="color" id="r-colour" value="${esc(roleDraft.colour)}" />
+          </label>
+        </div>
+
+        <div class="edit-label">${esc(t("f_role_rank"))}</div>
+        <div class="rank-row">
+          <button class="icon-btn" id="r-rank-down" type="button" aria-label="−">−</button>
+          <span class="rank-value" id="r-rank-value">${esc(roleDraft.rank)}</span>
+          <button class="icon-btn" id="r-rank-up" type="button" aria-label="+">+</button>
+        </div>
+        <div class="edit-hint">${esc(t("role_rank_hint"))}</div>
+
+        ${
+          editing
+            ? `<div class="edit-label">${esc(t("roles_holders_title"))}</div>
+               <div class="role-holders">
+                 ${
+                   holders.length
+                     ? holders
+                         .map(
+                           (member) => `<span class="holder" title="${esc(
+                             member.user ? member.user.tag : member.id,
+                           )}">${avatarHTML(
+                             member.hasAvatar,
+                             member.displayName,
+                             22,
+                             member.id,
+                           )}<span>${esc(member.displayName || member.id)}</span></span>`,
+                         )
+                         .join("")
+                     : `<span class="pane-note">${esc(t("roles_no_holders"))}</span>`
+                 }
+               </div>`
+            : ""
+        }
+        <div class="edit-hint error" id="r-hint"></div>
+      </div>
+      <footer class="pane-foot">
+        ${
+          editing
+            ? `<button class="btn danger small" id="r-delete" type="button">${esc(
+                t("delete"),
+              )}</button>`
+            : `<button class="btn flat" id="r-cancel" type="button">${esc(
+                t("cancel"),
+              )}</button>`
+        }
+        <button class="btn primary" id="r-save" type="button">${esc(
+          editing ? t("save") : t("roles_create"),
+        )}</button>
+      </footer>`;
+
+    const syncSwatches = () => {
+      detail.querySelectorAll("[data-colour]").forEach((button) => {
+        const on = button.dataset.colour === roleDraft.colour;
+        button.classList.toggle("on", on);
+        button.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    };
+    detail.querySelectorAll("[data-colour]").forEach((button) => {
+      button.addEventListener("click", () => {
+        roleDraft.colour = button.dataset.colour;
+        detail.querySelector("#r-colour").value = roleDraft.colour;
+        syncSwatches();
+      });
+    });
+    detail.querySelector("#r-colour").addEventListener("input", (event) => {
+      roleDraft.colour = event.target.value;
+      syncSwatches();
+    });
+
+    const setRank = (value) => {
+      roleDraft.rank = Math.max(0, Math.min(999, value));
+      detail.querySelector("#r-rank-value").textContent = String(roleDraft.rank);
+    };
+    detail
+      .querySelector("#r-rank-down")
+      .addEventListener("click", () => setRank(roleDraft.rank - 1));
+    detail
+      .querySelector("#r-rank-up")
+      .addEventListener("click", () => setRank(roleDraft.rank + 1));
+
+    const save = detail.querySelector("#r-save");
+    save.addEventListener("click", async () => {
+      const hint = detail.querySelector("#r-hint");
       hint.textContent = "";
-      const name = body.querySelector("#r-name").value.trim();
-      const colour = body.querySelector("#r-colour").value;
-      const rank = Number(body.querySelector("#r-rank").value) || 0;
-      create.disabled = true;
+      save.disabled = true;
       try {
         await api(`api/servers/${data.id}/roles`, {
           method: "POST",
-          body: { name, colour, rank },
+          body: {
+            name: detail.querySelector("#r-name").value.trim(),
+            colour: roleDraft.colour,
+            rank: roleDraft.rank,
+          },
         });
         toast(t("t_role_created"));
+        roleDraft = { id: null, colour: "#5470ec", rank: 0 };
         await refresh();
       } catch (err) {
         hint.textContent = errText(err);
-        create.disabled = false;
+        save.disabled = false;
       }
     });
 
-    body.querySelectorAll("[data-del-role]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const role = data.roles.find((entry) => entry.id === button.dataset.delRole);
-        if (!role) return;
-        if (!window.confirm(t("confirm_role_delete", { r: role.name }))) return;
-        button.disabled = true;
+    const del = detail.querySelector("#r-delete");
+    if (del) {
+      del.addEventListener("click", async () => {
+        if (!window.confirm(t("confirm_role_delete", { r: editing.name }))) return;
+        del.disabled = true;
         try {
-          const result = await api(
-            `api/servers/${data.id}/roles/${button.dataset.delRole}`,
-            { method: "DELETE" },
-          );
+          const result = await api(`api/servers/${data.id}/roles/${editing.id}`, {
+            method: "DELETE",
+          });
           toast(t("t_role_deleted", { n: result.members }));
+          roleDraft = { id: null, colour: "#5470ec", rank: 0 };
           await refresh();
         } catch (err) {
           toast(errText(err), true);
-          button.disabled = false;
+          del.disabled = false;
         }
       });
-    });
+    }
+
+    const cancel = detail.querySelector("#r-cancel");
+    if (cancel) {
+      cancel.addEventListener("click", () => {
+        roleDraft = { id: null, colour: "#5470ec", rank: 0 };
+        paintRoles(body);
+      });
+    }
   }
 
-  /* ---- settings ---- */
+  /* ---- settings ------------------------------------------------------- */
 
   function paintSettings(body) {
-    body.classList.add("single");
+    body.className = "drawer-body single";
     body.innerHTML = `
-      <div class="drawer-side" style="max-width:560px">
-        <div class="drawer-panel">
-          <div class="drawer-panel-title">${esc(t("s_edit"))}</div>
-          <div class="field">
-            <label>${esc(t("f_server_name"))}</label>
-            <input type="text" id="m-name" maxlength="32" value="${esc(data.name)}" />
+      <div class="settings-cols">
+        <section class="pane">
+          <div class="pane-head"><span class="pane-title">${esc(t("s_edit"))}</span></div>
+          <div class="pane-scroll edit-body">
+            <label class="edit-label" for="m-name">${esc(t("f_server_name"))}</label>
+            <input class="edit-input" type="text" id="m-name" maxlength="32" value="${esc(
+              data.name,
+            )}" />
+            <label class="edit-label" for="m-desc">${esc(t("f_server_desc"))}</label>
+            <textarea class="edit-input" id="m-desc" rows="3">${esc(
+              data.description || "",
+            )}</textarea>
+            <div class="edit-hint error" id="m-rename-hint"></div>
           </div>
-          <div class="field">
-            <label>${esc(t("f_server_desc"))}</label>
-            <textarea id="m-desc" rows="3">${esc(data.description || "")}</textarea>
-          </div>
-          <div class="hint" id="m-rename-hint"></div>
-          <div class="row end">
-            <button class="btn primary small" id="m-rename" type="button">${esc(
+          <footer class="pane-foot">
+            <button class="btn primary" id="m-rename" type="button">${esc(
               t("save"),
             )}</button>
+          </footer>
+        </section>
+
+        <section class="pane">
+          <div class="pane-head"><span class="pane-title">${esc(t("s_info"))}</span></div>
+          <div class="pane-scroll edit-body">
+            <dl class="info-list">
+              <dt>ID</dt><dd class="mono">${esc(data.id)}</dd>
+              <dt>${esc(t("th_owner"))}</dt><dd>${esc(
+                data.ownerUser ? data.ownerUser.tag : data.owner,
+              )}</dd>
+              <dt>${esc(t("th_channels"))}</dt><dd>${esc(fmtNum(data.channels))}</dd>
+              <dt>${esc(t("th_members"))}</dt><dd>${esc(fmtNum(data.members.length))}</dd>
+              <dt>${esc(t("tab_roles"))}</dt><dd>${esc(fmtNum(data.roles.length))}</dd>
+              <dt>${esc(t("th_created"))}</dt><dd>${esc(fmtDay(data.createdAt))}</dd>
+            </dl>
+            <div class="danger-block">
+              <div class="danger-text">
+                <strong>${esc(t("s_danger"))}</strong>
+                <span>${esc(t("delete_warn_short"))}</span>
+              </div>
+              <button class="btn danger" id="m-del-open" type="button">${esc(
+                t("delete_server"),
+              )}</button>
+            </div>
           </div>
-        </div>
-        <div class="drawer-panel">
-          <div class="drawer-panel-title">${esc(t("s_info"))}</div>
-          <div class="kv">
-            <dt>ID</dt><dd class="mono">${esc(data.id)}</dd>
-            <dt>${esc(t("th_owner"))}</dt><dd>${esc(
-              data.ownerUser ? data.ownerUser.tag : data.owner,
-            )}</dd>
-            <dt>${esc(t("th_channels"))}</dt><dd>${esc(fmtNum(data.channels))}</dd>
-            <dt>${esc(t("th_members"))}</dt><dd>${esc(fmtNum(data.members.length))}</dd>
-            <dt>${esc(t("tab_roles"))}</dt><dd>${esc(fmtNum(data.roles.length))}</dd>
-            <dt>${esc(t("th_created"))}</dt><dd>${esc(fmtDate(data.createdAt))}</dd>
-          </div>
-        </div>
-        <div class="danger-strip">
-          <span>${esc(t("delete_warn_short"))}</span>
-          <button class="btn danger small" id="m-del-open" type="button">${esc(
-            t("delete_server"),
-          )}</button>
-        </div>
+        </section>
       </div>`;
 
     const save = body.querySelector("#m-rename");
@@ -2446,12 +2857,15 @@ function openServerDrawer(data) {
     });
 
     body.querySelector("#m-del-open").addEventListener("click", () => {
-      close();
       openServerDelete({ id: data.id, name: data.name });
     });
   }
 
   paintTab();
+
+  // The roster should open on the list, not on an empty editor.
+  const firstInput = overlay.querySelector("#m-search");
+  if (firstInput) firstInput.focus({ preventScroll: true });
 }
 
 /* ---------- boot ------------------------------------------------------- */

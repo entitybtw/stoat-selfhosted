@@ -959,12 +959,12 @@ input[readonly] {
 
 /* ---------- server drawer ---------- */
 
-/* A wide window on one server: identity and editing on the left, the member
-   roster on the right. It is the only place members and roles are managed,
-   so it gets the room instead of another tab in a 560px dialog. */
+/* A wide window on one server. Every tab is a grid of panes and each pane
+   owns its own scroll area, so the dialog itself never scrolls and nothing
+   slides underneath the header or the tab strip. */
 .drawer {
-  width: min(1040px, 100%);
-  max-height: 88vh;
+  width: min(1080px, 100%);
+  height: min(720px, 92vh);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -973,11 +973,15 @@ input[readonly] {
   color: var(--md-sys-color-on-surface);
 }
 
+.overlay-drawer {
+  padding: 24px;
+}
+
 .drawer-head {
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  padding: 22px 24px 16px;
+  padding: 20px 20px 14px 24px;
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
@@ -986,35 +990,77 @@ input[readonly] {
   flex: 1;
 }
 
+/* A long name is shown in full; the scroll ellipsis font takes care of a
+   name that would not fit even in two lines, so it can never reach the
+   close button. */
 .drawer-title h2 {
   margin: 0;
   font-size: 1.375rem;
   line-height: 1.75rem;
   font-weight: 500;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .drawer-sub {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
-  margin-top: 4px;
-  font-size: 13px;
-  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 8px;
 }
 
-.drawer-close {
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 10px;
+  border-radius: var(--borderRadius-full);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.chip:empty {
+  display: none;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: var(--borderRadius-full);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
 }
 
 .drawer-tabs {
   display: flex;
   gap: 4px;
-  padding: 8px 16px 0;
+  padding: 6px 16px 0;
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
 }
 
 .drawer-tab {
@@ -1028,6 +1074,7 @@ input[readonly] {
   font-size: 14px;
   font-weight: 550;
   color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
 }
 
 .drawer-tab:hover {
@@ -1060,57 +1107,128 @@ input[readonly] {
   color: var(--md-sys-color-on-surface-variant);
 }
 
+/* The body is a fixed-height grid: panes scroll, the shell does not. */
 .drawer-body {
+  flex: 1;
+  min-height: 0;
   display: grid;
+  gap: 0;
+}
+
+.drawer-body.split {
   grid-template-columns: 320px minmax(0, 1fr);
-  gap: 20px;
-  padding: 20px 24px 24px;
-  overflow: auto;
-  min-height: 320px;
 }
 
 .drawer-body.single {
   grid-template-columns: minmax(0, 1fr);
+  overflow: auto;
 }
 
-.drawer-side {
+/* ---- one pane ---------------------------------------------------------- */
+
+.pane {
   display: flex;
   flex-direction: column;
-  gap: 18px;
   min-width: 0;
+  min-height: 0;
 }
 
-.drawer-panel {
-  padding: 14px;
-  border-radius: var(--borderRadius-lg);
+.pane + .pane {
+  border-left: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.pane-list {
   background: var(--md-sys-color-surface-container);
 }
 
-.drawer-panel-title {
-  margin-bottom: 10px;
+.pane-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.pane-head .btn {
+  margin-left: auto;
+}
+
+.pane-title {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.drawer-main {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.drawer-toolbar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.drawer-toolbar .search {
+.pane-search {
   flex: 1;
-  margin: 0;
+  min-width: 0;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--borderRadius-full);
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  font-size: 13.5px;
 }
+
+.pane-search::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pane-search:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+}
+
+.pane-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px;
+}
+
+.pane-detail .pane-scroll,
+.settings-cols .pane-scroll {
+  padding: 16px 20px;
+}
+
+.pane-empty {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pane-note {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pane-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 12px 20px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container);
+}
+
+.pane-foot .btn:first-child {
+  margin-right: auto;
+}
+
+.pane-foot .pane-note {
+  margin-right: auto;
+  max-width: 60%;
+}
+
+/* ---- roster rows ------------------------------------------------------- */
 
 .member-list {
   display: flex;
@@ -1147,46 +1265,85 @@ input[readonly] {
   color: var(--md-sys-color-on-secondary-container);
 }
 
+/* min-width:0 lets flex children shrink; without it a long name pushes the
+   date out of the row instead of wrapping. */
 .member-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .member-name {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 6px;
+  flex-wrap: wrap;
   font-size: 14px;
   font-weight: 550;
   min-width: 0;
 }
 
-.member-name > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* The requirement: a long nickname or "deleted user" wraps inside the row. */
+.member-name-text {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.member-sub {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.member-sub:empty {
+  display: none;
 }
 
 .member-meta {
-  font-size: 12px;
-  color: var(--md-sys-color-on-surface-variant);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
 }
+
+.member-since {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-sys-color-on-surface-variant);
+  align-self: flex-start;
+  padding-top: 2px;
+}
+
+.member-meta-dim {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.owner-badge {
+  flex-shrink: 0;
+}
+
+/* ---- avatars ----------------------------------------------------------- */
 
 .avatar {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: var(--avatar-size, 34px);
+  height: var(--avatar-size, 34px);
   border-radius: 50%;
   overflow: hidden;
   background: var(--md-sys-color-tertiary-container);
   color: var(--md-sys-color-on-tertiary-container);
-  font-size: 13px;
+  font-size: calc(var(--avatar-size, 34px) * 0.38);
   font-weight: 600;
+  user-select: none;
 }
 
 .avatar img {
@@ -1195,30 +1352,132 @@ input[readonly] {
   object-fit: cover;
 }
 
-.role-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 3px;
+.avatar-btn {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
 }
 
-.role-tag {
-  display: inline-flex;
+.avatar-btn:hover .avatar,
+.avatar-btn:focus-visible .avatar {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.avatar-btn.busy .avatar {
+  opacity: 0.45;
+}
+
+.avatar-badge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--md-sys-color-surface-container-high);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+/* ---- member editor / role editor --------------------------------------- */
+
+.edit-head {
   align-items: center;
-  gap: 4px;
-  padding: 1px 7px;
-  border-radius: 9px;
-  font-size: 11px;
+}
+
+.edit-who {
+  flex: 1;
+  min-width: 0;
+}
+
+.edit-name {
+  font-size: 16px;
   font-weight: 600;
-  background: var(--md-sys-color-surface-container-highest);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.edit-sub {
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--md-sys-color-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.edit-body {
+  /* the label/input rhythm is a single column, so fields never jump */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-label {
+  margin-top: 14px;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.role-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--md-sys-color-outline);
+.edit-label:first-child {
+  margin-top: 0;
+}
+
+.edit-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--borderRadius-sm);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+}
+
+.edit-hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.edit-hint.error {
+  color: var(--md-sys-color-error);
+}
+
+.edit-hint.error:empty {
+  display: none;
+}
+
+.edit-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 12.5px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ---- role picks (member editor) ---------------------------------------- */
+
+.pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .role-pick {
@@ -1226,7 +1485,7 @@ input[readonly] {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 7px 10px;
+  padding: 8px 12px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--borderRadius-md);
   background: transparent;
@@ -1247,21 +1506,268 @@ input[readonly] {
   color: var(--md-sys-color-on-primary-container);
 }
 
-.role-pick .rank {
+.role-check {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--md-sys-color-outline);
+  border-radius: var(--borderRadius-xs);
+  color: transparent;
+}
+
+.role-pick.on .role-check {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.role-name {
+  flex: 1;
+  min-width: 0;
+  padding-right: 4px;
+  overflow-wrap: anywhere;
+}
+
+.role-colour {
   margin-left: auto;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.role-pick.add-role .role-check {
+  border-style: dashed;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ---- role tags --------------------------------------------------------- */
+
+.role-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.role-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 1px 7px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.role-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--md-sys-color-outline);
+}
+
+/* ---- roles tab --------------------------------------------------------- */
+
+.role-avatar {
+  font-weight: 700;
+  color: #fff;
+}
+
+.role-rank {
+  flex-shrink: 0;
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.role-pick.on .rank {
-  color: inherit;
+.role-holders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.pick-list {
+.holder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 10px 3px 3px;
+  border-radius: var(--borderRadius-full);
+  background: var(--md-sys-color-surface-container-highest);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--swatch, var(--md-sys-color-surface-container-highest));
+  cursor: pointer;
+}
+
+.swatch.on {
+  border-color: var(--md-sys-color-on-surface);
+  box-shadow: 0 0 0 2px var(--md-sys-color-surface-container-high) inset;
+}
+
+.swatch.custom {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: conic-gradient(#f43f5e, #eab308, #22c55e, #06b6d4, #a855f7, #f43f5e);
+}
+
+.swatch.custom input {
+  width: 150%;
+  height: 150%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rank-value {
+  min-width: 56px;
+  padding: 8px 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--borderRadius-sm);
+  background: var(--md-sys-color-surface-container);
+  text-align: center;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- settings tab ------------------------------------------------------ */
+
+.settings-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px;
+  align-content: start;
+  align-items: start;
+}
+
+.settings-cols .pane {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--borderRadius-lg);
+  background: var(--md-sys-color-surface-container);
+  overflow: hidden;
+}
+
+.settings-cols .pane + .pane {
+  border-left: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.settings-cols .pane-scroll {
+  overflow: visible;
+  min-height: 0;
+}
+
+.info-list {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.info-list dt {
+  color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
+}
+
+.info-list dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.info-list dd.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+.danger-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: var(--borderRadius-md);
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 55%, transparent);
+  border: 1px solid var(--md-sys-color-error);
+}
+
+.danger-text {
+  flex: 1;
+  min-width: 160px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+  font-size: 12.5px;
+  color: var(--md-sys-color-on-error-container);
+}
+
+.danger-text strong {
+  font-size: 13.5px;
+}
+
+/* ---- delete dialog ----------------------------------------------------- */
+
+.dialog-sm {
+  width: min(460px, 100%);
+}
+
+.dialog-lead {
+  margin: 6px 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.confirm-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 8px 8px 8px 12px;
+  border-radius: var(--borderRadius-sm);
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.confirm-name {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  user-select: all;
 }
 
 .search-hit {
@@ -1280,29 +1786,6 @@ input[readonly] {
 .drawer-note {
   font-size: 12.5px;
   color: var(--md-sys-color-on-surface-variant);
-}
-
-.danger-strip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: var(--borderRadius-lg);
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-}
-
-.color-input {
-  width: 44px;
-  height: 38px;
-  padding: 2px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--borderRadius-sm);
-  background: transparent;
-  cursor: pointer;
 }
 
 /* ---------- responsive ---------- */
@@ -1486,18 +1969,45 @@ input[readonly] {
 }
 
 @media (max-width: 860px) {
-  .drawer {
-    max-height: 94vh;
+  .overlay-drawer {
+    padding: 0;
   }
-  .drawer-body {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 16px;
+  .drawer {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
   }
   .drawer-head {
-    padding: 16px 16px 12px;
+    padding: 14px 12px 10px 16px;
   }
   .drawer-tabs {
     overflow-x: auto;
-    padding: 8px 8px 0;
+    scrollbar-width: none;
+    padding: 6px 8px 0;
+  }
+  .drawer-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  /* One column: the roster keeps the top half, the editor the rest. Both
+     still scroll on their own, so the header stays put. */
+  .drawer-body.split {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(120px, 40%) minmax(0, 1fr);
+  }
+  .drawer-body.split .pane-detail {
+    border-left: none;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+  }
+  .settings-cols {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px;
+  }
+  .pane-scroll {
+    padding: 8px;
+  }
+  .pane-detail .pane-scroll,
+  .settings-cols .pane-scroll {
+    padding: 14px;
   }
 }
