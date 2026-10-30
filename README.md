@@ -233,7 +233,7 @@ Self-hosting Stoat using Docker
 example stays universal — the tags move together whenever a release is pushed.
 Pinned tags are published next to them for reproducible deploys: the backend
 images from `v0.1.0` (`v0.1.0-api`, …, `v0.1.0-voice-ingress`) and the web
-image from the `for-web` fork (`v0.1.16-web`). Swap any `latest-*` tag for its
+image from the `for-web` fork (`v0.1.17-web`). Swap any `latest-*` tag for its
 pinned counterpart when you want a reproducible deploy. The admin panel is
 versioned on its own and published as `v0.0.8` alongside `latest`.
 
