@@ -211,7 +211,35 @@ Self-hosting Stoat using Docker
   with null-checked DOM writes, so fast navigation can no longer trip over
   removed elements.
 - The panel talks to MongoDB directly (no extra API, no extra schema); it only
-  needs the `admin-panel` service in `compose.yml`.
+  needs the `admin-panel` service in `compose.yml`. The one exception is the
+  guest feature: new accounts are minted by the Stoat API itself (`POST
+  /auth/account/create` → login → `/onboard/complete`), because the backend
+  owns password hashing and onboarding. That is what `API_INTERNAL_URL`
+  (`http://api:14702`) is for.
+
+#### Guest accounts
+
+The **Guests** page in the panel turns on temporary accounts: the login screen
+then grows a "continue as a guest" button that asks for nothing but a display
+name. The panel creates an ordinary account with an address in a reserved
+domain (`guest-<hex>@guest.entitybtw.ru`), decorates the name with a configurable
+suffix (` [гость]` by default) and records when it expires in
+`admin_guest_accounts` — the lifetime defaults to 180 days, both the suffix and
+the lifetime are editable, as is every restriction below.
+
+Guests start with an empty client and join servers only by invite. The client
+asks the panel (`/admin-panel/api/guest/status`) what the current account may not
+do and hides those controls: sending files and media, avatar and banner,
+server emoji, soundboard uploads, local emoji packs and creating servers. The
+soundboard itself keeps working — guests may play sounds, just not add any.
+
+On the first visit a dialog offers to turn the account into a real one: the
+email and password are changed through the normal account endpoints and the
+suffix is dropped. The generated password is kept in the browser's
+`localStorage` next to the session, because the backend asks for it when the
+email changes. When the lifetime runs out, the hourly cleaner marks the account
+`disabled` with a `deletion` record — the same shape the backend writes when a
+user deletes their own account — and the backend's own crond job does the rest.
 
 ### Images used by `compose.yml`
 
@@ -235,7 +263,7 @@ Pinned tags are published next to them for reproducible deploys: the backend
 images from `v0.1.0` (`v0.1.0-api`, …, `v0.1.0-voice-ingress`) and the web
 image from the `for-web` fork (`v0.1.17-web`). Swap any `latest-*` tag for its
 pinned counterpart when you want a reproducible deploy. The admin panel is
-versioned on its own and published as `v0.0.8` alongside `latest`.
+versioned on its own and published as `v0.0.9` alongside `latest`.
 
 The backend images are built from `v0.15.5`, the web image from the `for-web`
 fork; `livekit` is a mirror of `ghcr.io/stoatchat/livekit-server:v1.9.13`.

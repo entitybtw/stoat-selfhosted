@@ -241,6 +241,8 @@ services:
       ADMIN_PANEL_PATH: ${ADMIN_PANEL_PATH:-/admin-panel}
       MONGODB_URI: mongodb://database:27017
       REDIS_URI: redis://redis:6379
+      # creating guest accounts goes through the API, not MongoDB
+      API_INTERNAL_URL: http://api:14702
     depends_on:
       database:
         condition: service_started

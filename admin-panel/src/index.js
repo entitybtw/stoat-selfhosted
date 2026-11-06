@@ -23,6 +23,18 @@ import {
 } from "./routes/users.js";
 import { listServers, renameServer, deleteServer } from "./routes/servers.js";
 import {
+  extendGuestHandler,
+  getGuestSettingsHandler,
+  guestConfig,
+  guestRegister,
+  guestStatusHandler,
+  listGuests,
+  putGuestSettings,
+  removeGuest,
+  runGuestCleanup,
+} from "./routes/guest.js";
+import { expireGuests } from "./guest.js";
+import {
   getServer,
   searchServerMembers,
   addServerMember,
@@ -92,6 +104,19 @@ app.post("/api/users/:id/password", requireAuth, setUserPassword);
 app.post("/api/users/:id/privileged", requireAuth, setUserPrivileged);
 app.post("/api/users/:id/disabled", requireAuth, setUserDisabled);
 
+// public guest endpoints used by the web client
+app.get("/api/guest/config", guestConfig);
+app.post("/api/guest/register", guestRegister);
+app.get("/api/guest/status", guestStatusHandler);
+
+// guest management
+app.get("/api/guests", requireAuth, listGuests);
+app.get("/api/guests/settings", requireAuth, getGuestSettingsHandler);
+app.put("/api/guests/settings", requireAuth, putGuestSettings);
+app.post("/api/guests/cleanup", requireAuth, runGuestCleanup);
+app.post("/api/guests/:id/extend", requireAuth, extendGuestHandler);
+app.delete("/api/guests/:id", requireAuth, removeGuest);
+
 app.get("/api/servers", requireAuth, listServers);
 app.get("/api/servers/:id", requireAuth, getServer);
 app.get("/api/servers/:id/members", requireAuth, searchServerMembers);
@@ -126,6 +151,23 @@ app.use((err, req, res, next) => {
 });
 
 await connectDb();
+
+// Expired guests are removed once an hour; the backend's own cleaner then
+// wipes the account itself.
+async function cleanupLoop() {
+  try {
+    const result = await expireGuests();
+    if (result.deleted || result.converted) {
+      console.log(`[guest] deleted ${result.deleted}, upgraded ${result.converted}`);
+    }
+  } catch (error) {
+    console.error("[guest] cleanup failed:", error);
+  }
+}
+
+cleanupLoop();
+setInterval(cleanupLoop, 3_600_000).unref();
+
 app.listen(config.port, () => {
   console.log(`[http] stoat admin panel listening on :${config.port}`);
   console.log(`[http] expected mount path: ${config.basePath}/`);

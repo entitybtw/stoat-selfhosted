@@ -10,6 +10,9 @@ export const config = {
   // Redis/Valkey used for voice state and event fan-out
   redisUri: process.env.REDIS_URI || "redis://redis:6379",
 
+  // Internal address of the Stoat API, used to create guest accounts
+  apiUrl: process.env.API_INTERNAL_URL || "http://api:14702",
+
   // External mount path (Caddy strips this prefix before proxying here).
   // Used for the session cookie path so it applies to the whole panel.
   basePath:

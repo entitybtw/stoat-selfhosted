@@ -33,7 +33,46 @@ const I18N = {
     nav_overview: "Обзор",
     nav_users: "Пользователи",
     nav_servers: "Серверы",
+    nav_guests: "Гости",
     logout: "Выйти",
+    guests_title: "Гости",
+    guests_subtitle: "Временные аккаунты: сколько живут, приписка к нику и что им нельзя",
+    guests_settings: "Настройки",
+    guests_enabled: "Разрешить гостевые аккаунты",
+    guests_lifetime: "Срок жизни, дней",
+    guests_suffix_on: "Добавлять приписку к нику",
+    guests_suffix: "Приписка",
+    guests_blocks: "Гостю нельзя",
+    guests_block_files: "Отправлять файлы и медиа",
+    guests_block_avatar: "Ставить аватар и баннер",
+    guests_block_emoji: "Загружать эмодзи на сервер",
+    guests_block_soundboard: "Загружать звуки в саундборд",
+    guests_block_servers: "Создавать серверы",
+    guests_block_local_emoji: "Добавлять свои эмодзи",
+    guests_per_ip: "Гостей на адрес",
+    guests_window: "Окно лимита, часов",
+    guests_hint_per_ip: "0 — без лимита",
+    guests_saved: "Сохранено",
+    guests_search_ph: "Имя, username или email",
+    guests_th_guest: "Гость",
+    guests_th_email: "Email",
+    guests_th_created: "Создан",
+    guests_th_expires: "Истекает",
+    guests_th_status: "Статус",
+    guests_status_active: "Активен",
+    guests_status_expired: "Истёк",
+    guests_status_converted: "Зарегистрировался",
+    guests_status_deleted: "Удалён",
+    guests_extend: "+30 дней",
+    guests_delete: "Удалить",
+    guests_delete_confirm: "Удалить гостевой аккаунт сейчас?",
+    guests_cleanup: "Удалить просроченные",
+    guests_cleanup_done: "Удалено: {n}",
+    guests_extended: "Срок продлён",
+    guests_none: "Гостей пока нет",
+    guests_hint: "Срок по умолчанию — 180 дней (около 6 месяцев).",
+    guests_expires_never: "бессрочно",
+
 
     stats_title: "Обзор",
     stats_subtitle: "Состояние базы данных инстанса",
@@ -259,7 +298,46 @@ const I18N = {
     nav_overview: "Overview",
     nav_users: "Users",
     nav_servers: "Servers",
+    nav_guests: "Guests",
     logout: "Log out",
+    guests_title: "Guests",
+    guests_subtitle: "Temporary accounts: lifetime, name suffix and what they may not do",
+    guests_settings: "Settings",
+    guests_enabled: "Allow guest accounts",
+    guests_lifetime: "Lifetime, days",
+    guests_suffix_on: "Add a suffix to the display name",
+    guests_suffix: "Suffix",
+    guests_blocks: "A guest may not",
+    guests_block_files: "Send files and media",
+    guests_block_avatar: "Set an avatar or banner",
+    guests_block_emoji: "Upload emoji to a server",
+    guests_block_soundboard: "Upload soundboard sounds",
+    guests_block_servers: "Create servers",
+    guests_block_local_emoji: "Add own emoji",
+    guests_per_ip: "Guests per address",
+    guests_window: "Rate limit window, hours",
+    guests_hint_per_ip: "0 means no limit",
+    guests_saved: "Saved",
+    guests_search_ph: "Name, username or email",
+    guests_th_guest: "Guest",
+    guests_th_email: "Email",
+    guests_th_created: "Created",
+    guests_th_expires: "Expires",
+    guests_th_status: "Status",
+    guests_status_active: "Active",
+    guests_status_expired: "Expired",
+    guests_status_converted: "Registered",
+    guests_status_deleted: "Deleted",
+    guests_extend: "+30 days",
+    guests_delete: "Delete",
+    guests_delete_confirm: "Delete this guest account now?",
+    guests_cleanup: "Delete expired",
+    guests_cleanup_done: "Deleted: {n}",
+    guests_extended: "Lifetime extended",
+    guests_none: "No guests yet",
+    guests_hint: "The default lifetime is 180 days (about six months).",
+    guests_expires_never: "never",
+
 
     stats_title: "Overview",
     stats_subtitle: "Instance database status",
@@ -745,6 +823,7 @@ const state = {
   view: "stats",
   users: { q: "", page: 1 },
   servers: { q: "", page: 1 },
+  guests: { q: "", page: 1 },
   /* Last successful payload per view, keyed by the query it belongs to.
      A re-render (language switch, nav click) repaints from here instantly
      and refreshes in the background, so the UI never flashes "loading". */
@@ -1161,6 +1240,7 @@ function renderShell() {
           <button class="nav-item ${state.view === "stats" ? "active" : ""}" data-view="stats">${esc(t("nav_overview"))}</button>
           <button class="nav-item ${state.view === "users" ? "active" : ""}" data-view="users">${esc(t("nav_users"))}</button>
           <button class="nav-item ${state.view === "servers" ? "active" : ""}" data-view="servers">${esc(t("nav_servers"))}</button>
+          <button class="nav-item ${state.view === "guests" ? "active" : ""}" data-view="guests">${esc(t("nav_guests"))}</button>
         </nav>
         <div class="sidebar-bottom">
           <div class="sidebar-lang">${langSwitchHTML()}</div>
@@ -1203,6 +1283,7 @@ function loadView() {
   if (state.view === "stats") renderStats();
   else if (state.view === "users") renderUsers();
   else if (state.view === "servers") renderServers();
+  else if (state.view === "guests") renderGuests();
 }
 
 /* ---------- stats ------------------------------------------------------ */
@@ -1390,6 +1471,279 @@ function paintUsers(data) {
     renderPager(pager, data, (page) => {
       state.users.page = page;
       loadUsers();
+    });
+  }
+}
+
+/* ---------- guests ----------------------------------------------------- */
+
+function guestSwitch(id, label, checked) {
+  return `<label class="switch-row">
+    <input type="checkbox" id="${id}"${checked ? " checked" : ""} />
+    <span>${esc(label)}</span>
+  </label>`;
+}
+
+function renderGuests() {
+  bump();
+  const main = document.getElementById("main");
+  if (!main) return;
+
+  main.innerHTML = `
+    <h1>${esc(t("guests_title"))}</h1>
+    <div class="subtitle">${esc(t("guests_subtitle"))}</div>
+    <div class="card settings-card" id="guest-settings">${esc(t("loading"))}</div>
+    <div class="toolbar">
+      <input class="search" id="guests-q" type="text"
+        placeholder="${esc(t("guests_search_ph"))}"
+        value="${esc(state.guests.q)}" />
+      <button class="btn tonal" id="guests-go">${esc(t("find"))}</button>
+      <button class="btn outlined" id="guests-cleanup">${esc(t("guests_cleanup"))}</button>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>${esc(t("guests_th_guest"))}</th>
+            <th>${esc(t("guests_th_email"))}</th>
+            <th>${esc(t("guests_th_created"))}</th>
+            <th>${esc(t("guests_th_expires"))}</th>
+            <th>${esc(t("guests_th_status"))}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="guests-body">
+          <tr><td colspan="6" class="empty">${esc(t("loading"))}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pager" id="guests-pager"></div>`;
+
+  const input = document.getElementById("guests-q");
+  let timer;
+  const submit = () => {
+    clearTimeout(timer);
+    state.guests.q = input.value;
+    state.guests.page = 1;
+    loadGuests();
+  };
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(submit, 300);
+  });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") submit();
+  });
+  document.getElementById("guests-go").addEventListener("click", submit);
+
+  document.getElementById("guests-cleanup").addEventListener("click", async () => {
+    try {
+      const result = await api("api/guests/cleanup", { method: "POST" });
+      toast(t("guests_cleanup_done", { n: fmtNum(result.deleted || 0) }));
+      loadGuests();
+    } catch (err) {
+      toast(errText(err), true);
+    }
+  });
+
+  loadGuestSettings();
+  loadGuests();
+}
+
+async function loadGuestSettings() {
+  const card = document.getElementById("guest-settings");
+  if (!card) return;
+
+  try {
+    const settings = await api("api/guests/settings");
+    paintGuestSettings(settings);
+  } catch (err) {
+    card.innerHTML = `<div class="dim">${esc(errText(err))}</div>`;
+  }
+}
+
+function paintGuestSettings(settings) {
+  const card = document.getElementById("guest-settings");
+  if (!card) return;
+
+  card.innerHTML = `
+    <h2>${esc(t("guests_settings"))}</h2>
+    ${guestSwitch("gs-enabled", t("guests_enabled"), settings.enabled)}
+    <div class="settings-grid">
+      <div class="field">
+        <label>${esc(t("guests_lifetime"))}</label>
+        <input type="number" id="gs-lifetime" min="1" max="3650" value="${esc(settings.lifetimeDays)}" />
+        <div class="hint">${esc(t("guests_hint"))}</div>
+      </div>
+      <div class="field">
+        <label>${esc(t("guests_per_ip"))}</label>
+        <input type="number" id="gs-per-ip" min="0" max="100" value="${esc(settings.perIpLimit)}" />
+        <div class="hint">${esc(t("guests_hint_per_ip"))}</div>
+      </div>
+      <div class="field">
+        <label>${esc(t("guests_window"))}</label>
+        <input type="number" id="gs-window" min="1" max="720" value="${esc(settings.perIpWindowHours)}" />
+      </div>
+    </div>
+    ${guestSwitch("gs-suffix-on", t("guests_suffix_on"), settings.suffixEnabled)}
+    <div class="field">
+      <label>${esc(t("guests_suffix"))}</label>
+      <input type="text" id="gs-suffix" maxlength="32" value="${esc(settings.suffix)}" />
+    </div>
+    <div class="settings-group-label">${esc(t("guests_blocks"))}</div>
+    ${guestSwitch("gs-block-files", t("guests_block_files"), settings.blockFiles)}
+    ${guestSwitch("gs-block-avatar", t("guests_block_avatar"), settings.blockAvatar)}
+    ${guestSwitch("gs-block-emoji", t("guests_block_emoji"), settings.blockEmoji)}
+    ${guestSwitch("gs-block-soundboard", t("guests_block_soundboard"), settings.blockSoundboard)}
+    ${guestSwitch("gs-block-servers", t("guests_block_servers"), settings.blockServers)}
+    ${guestSwitch("gs-block-local-emoji", t("guests_block_local_emoji"), settings.blockLocalEmoji)}
+    <div class="settings-actions">
+      <button class="btn primary" id="gs-save">${esc(t("save"))}</button>
+    </div>`;
+
+  document.getElementById("gs-save").addEventListener("click", async () => {
+    const body = {
+      enabled: document.getElementById("gs-enabled").checked,
+      lifetimeDays: Number(document.getElementById("gs-lifetime").value),
+      perIpLimit: Number(document.getElementById("gs-per-ip").value),
+      perIpWindowHours: Number(document.getElementById("gs-window").value),
+      suffixEnabled: document.getElementById("gs-suffix-on").checked,
+      suffix: document.getElementById("gs-suffix").value,
+      blockFiles: document.getElementById("gs-block-files").checked,
+      blockAvatar: document.getElementById("gs-block-avatar").checked,
+      blockEmoji: document.getElementById("gs-block-emoji").checked,
+      blockSoundboard: document.getElementById("gs-block-soundboard").checked,
+      blockServers: document.getElementById("gs-block-servers").checked,
+      blockLocalEmoji: document.getElementById("gs-block-local-emoji").checked,
+    };
+
+    const button = document.getElementById("gs-save");
+    button.disabled = true;
+    try {
+      const saved = await api("api/guests/settings", { method: "PUT", body });
+      toast(t("guests_saved"));
+      paintGuestSettings(saved);
+    } catch (err) {
+      toast(errText(err), true);
+      button.disabled = false;
+    }
+  });
+}
+
+async function loadGuests() {
+  const seq = bump();
+  const body = document.getElementById("guests-body");
+  if (!body) return;
+
+  const key = `${state.guests.q}|${state.guests.page}`;
+  const cached =
+    state.cache.guests && state.cache.guestsKey === key ? state.cache.guests : null;
+  if (cached) paintGuests(cached);
+  else if (!body.querySelector("tr[data-id]")) {
+    body.innerHTML = `<tr><td colspan="6" class="empty">${esc(t("loading"))}</td></tr>`;
+  }
+
+  try {
+    const data = await api(
+      `api/guests?q=${encodeURIComponent(state.guests.q)}&page=${state.guests.page}`,
+    );
+    if (seq !== viewSeq) return;
+    state.cache.guests = data;
+    state.cache.guestsKey = key;
+    paintGuests(data);
+  } catch (err) {
+    if (seq !== viewSeq) return;
+    toast(errText(err), true);
+    const bodyNow = document.getElementById("guests-body");
+    if (bodyNow && !bodyNow.querySelector("tr[data-id]")) {
+      bodyNow.innerHTML = `<tr><td colspan="6" class="empty">${esc(t("load_error"))}</td></tr>`;
+    }
+  }
+}
+
+function paintGuests(data) {
+  const body = document.getElementById("guests-body");
+  const pager = document.getElementById("guests-pager");
+  const now = Date.now();
+
+  if (body) {
+    body.innerHTML = data.items.length
+      ? data.items
+          .map((guest) => {
+            let status = "active";
+            if (guest.deleted) status = "deleted";
+            else if (guest.converted) status = "converted";
+            else if (guest.expired || guest.disabled) status = "expired";
+
+            const badge =
+              status === "active"
+                ? `<span class="badge ok">${esc(t("guests_status_active"))}</span>`
+                : status === "converted"
+                  ? `<span class="badge">${esc(t("guests_status_converted"))}</span>`
+                  : `<span class="badge off">${esc(t(status === "deleted" ? "guests_status_deleted" : "guests_status_expired"))}</span>`;
+
+            const expires =
+              guest.expiresAt && new Date(guest.expiresAt).getTime() <= now && status === "active"
+                ? t("guests_status_expired")
+                : fmtDate(guest.expiresAt);
+
+            const actions =
+              status === "converted" || status === "deleted"
+                ? ""
+                : `<button class="btn tonal small" data-extend="${esc(guest.id)}">${esc(t("guests_extend"))}</button>
+                   <button class="btn danger small" data-delete="${esc(guest.id)}">${esc(t("guests_delete"))}</button>`;
+
+            return `
+      <tr data-id="${esc(guest.id)}">
+        <td>
+          <div class="strong">${esc(guest.displayName || "—")}</div>
+          <div class="dim mono">${esc(guest.username || "")}${guest.discriminator ? `#${esc(guest.discriminator)}` : ""}</div>
+        </td>
+        <td class="mono">${esc(guest.email || "—")}</td>
+        <td>${esc(fmtDate(guest.createdAt))}</td>
+        <td>${esc(expires)}</td>
+        <td>${badge}</td>
+        <td class="row-actions">${actions}</td>
+      </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="6" class="empty">${esc(t("guests_none"))}</td></tr>`;
+
+    body.querySelectorAll("[data-extend]").forEach((button) => {
+      button.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        try {
+          await api(`api/guests/${button.dataset.extend}/extend`, {
+            method: "POST",
+            body: { days: 30 },
+          });
+          toast(t("guests_extended"));
+          loadGuests();
+        } catch (err) {
+          toast(errText(err), true);
+        }
+      });
+    });
+
+    body.querySelectorAll("[data-delete]").forEach((button) => {
+      button.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        if (!window.confirm(t("guests_delete_confirm"))) return;
+        try {
+          await api(`api/guests/${button.dataset.delete}`, { method: "DELETE" });
+          toast(t("guests_delete"));
+          loadGuests();
+        } catch (err) {
+          toast(errText(err), true);
+        }
+      });
+    });
+  }
+
+  if (pager) {
+    renderPager(pager, data, (page) => {
+      state.guests.page = page;
+      loadGuests();
     });
   }
 }
