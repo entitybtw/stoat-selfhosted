@@ -376,17 +376,46 @@ export async function guestStatus(token) {
 /* ------------------------------------------------------------------ */
 
 /**
- * Disable an account and let the backend's hourly job finish the deletion.
+ * Remove everything that belongs to one account.
  *
- * `deletion` is the same field the API writes when somebody deletes their own
- * account, so the cleanup (messages, memberships, sessions) is the backend's.
+ * The backend's own cleanup job is meant to do this, but it looks for an
+ * account that is still there and only marks it for deletion, so an account
+ * that is already disabled is never picked up again. Since a guest is worth
+ * nothing once it is gone, the panel does the removal itself.
+ * @param {string} userId
+ */
+async function purgeAccount(userId) {
+  await col("accounts").deleteOne({ _id: userId });
+  await col("users").deleteOne({ _id: userId });
+  await col("sessions").deleteMany({ user_id: userId });
+  await col("user_settings").deleteMany({ user_id: userId });
+  await col("messages").deleteMany({ author: userId });
+  await col("channels").updateMany({ creator: userId }, { $set: { creator: null } });
+  await col("servers").updateMany({ creator: userId }, { $set: { creator: null } });
+  await col("server_members").deleteMany({ "id.user_id": userId });
+  await col("channel_unreads").deleteMany({ user_id: userId });
+  await col("channel_invites").deleteMany({ creator: userId });
+  await col("server_bans").deleteMany({ user_id: userId });
+  await col("safety_strikes").deleteMany({ user_id: userId });
+  await col("bots").deleteMany({ creator: userId });
+  await col(ACCOUNTS_COLLECTION).deleteOne({ _id: userId });
+}
+
+/**
+ * Disable an account and remove it.
+ *
+ * The account is disabled first so nothing can use it between the moment
+ * the decision is made and the moment the data is gone.
  * @param {string} userId
  */
 export async function deleteGuestAccount(userId) {
   const now = new Date();
 
   const account = await col("accounts").findOne({ _id: userId });
-  if (!account) return false;
+  if (!account) {
+    await col(ACCOUNTS_COLLECTION).deleteOne({ _id: userId });
+    return false;
+  }
 
   await col("accounts").updateOne(
     { _id: userId },
@@ -394,10 +423,8 @@ export async function deleteGuestAccount(userId) {
   );
 
   await col("sessions").deleteMany({ user_id: userId });
-  await col(ACCOUNTS_COLLECTION).updateOne(
-    { _id: userId },
-    { $set: { expiredAt: now } },
-  );
+
+  await purgeAccount(userId);
 
   return true;
 }
