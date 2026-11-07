@@ -48,6 +48,7 @@ const I18N = {
     guests_block_emoji: "Загружать эмодзи на сервер",
     guests_block_soundboard: "Загружать звуки в саундборд",
     guests_block_servers: "Создавать серверы",
+    guests_block_bots: "Создавать ботов",
     guests_block_local_emoji: "Добавлять свои эмодзи",
     guests_per_ip: "Гостей на адрес",
     guests_window: "Окно лимита, часов",
@@ -313,6 +314,7 @@ const I18N = {
     guests_block_emoji: "Upload emoji to a server",
     guests_block_soundboard: "Upload soundboard sounds",
     guests_block_servers: "Create servers",
+    guests_block_bots: "Create bots",
     guests_block_local_emoji: "Add own emoji",
     guests_per_ip: "Guests per address",
     guests_window: "Rate limit window, hours",
@@ -1596,6 +1598,7 @@ function paintGuestSettings(settings) {
     ${guestSwitch("gs-block-emoji", t("guests_block_emoji"), settings.blockEmoji)}
     ${guestSwitch("gs-block-soundboard", t("guests_block_soundboard"), settings.blockSoundboard)}
     ${guestSwitch("gs-block-servers", t("guests_block_servers"), settings.blockServers)}
+    ${guestSwitch("gs-block-bots", t("guests_block_bots"), settings.blockBots)}
     ${guestSwitch("gs-block-local-emoji", t("guests_block_local_emoji"), settings.blockLocalEmoji)}
     <div class="settings-actions">
       <button class="btn primary" id="gs-save">${esc(t("save"))}</button>
@@ -1614,6 +1617,7 @@ function paintGuestSettings(settings) {
       blockEmoji: document.getElementById("gs-block-emoji").checked,
       blockSoundboard: document.getElementById("gs-block-soundboard").checked,
       blockServers: document.getElementById("gs-block-servers").checked,
+      blockBots: document.getElementById("gs-block-bots").checked,
       blockLocalEmoji: document.getElementById("gs-block-local-emoji").checked,
     };
 

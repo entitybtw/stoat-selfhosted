@@ -230,8 +230,9 @@ the lifetime are editable, as is every restriction below.
 Guests start with an empty client and join servers only by invite. The client
 asks the panel (`/admin-panel/api/guest/status`) what the current account may not
 do and hides those controls: sending files and media, avatar and banner,
-server emoji, soundboard uploads, local emoji packs and creating servers. The
-soundboard itself keeps working — guests may play sounds, just not add any.
+server emoji, soundboard uploads, local emoji packs, creating servers and
+creating bots. The soundboard itself keeps working — guests may play sounds,
+just not add any.
 
 The restrictions are enforced by the backend as well, not only by the client.
 An account whose email lives in the reserved domain is a guest for the API and
@@ -245,10 +246,11 @@ fallback for an instance without a panel.
 | ----------------------------- | ------------------------------------------------------ |
 | sending a file in a message   | `POST /channels/<id>/messages`, and the file server    |
 | uploading any file            | the file server (`autumn`), by the kind of upload      |
-| setting an avatar             | `PATCH /users/@me`                                     |
+| setting an avatar or banner   | `PATCH /users/@me`                                     |
 | creating custom emoji         | `PUT /custom/emoji/<id>`                              |
 | publishing to the soundboard  | `PATCH /servers/<id>`, and the file server            |
 | creating a server             | `POST /servers/create`                                 |
+| creating a bot                | `POST /bots/create`                                    |
 
 Local emoji never leave the device, so there is nothing on the server to
 refuse: that one restriction can only be the client's.

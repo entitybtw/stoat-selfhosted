@@ -42,6 +42,7 @@ export const DEFAULT_SETTINGS = {
   blockEmoji: true,
   blockSoundboard: true,
   blockServers: true,
+  blockBots: true,
   blockLocalEmoji: true,
 
   /**
@@ -62,6 +63,7 @@ const BOOLEAN_SETTINGS = [
   "blockEmoji",
   "blockSoundboard",
   "blockServers",
+  "blockBots",
   "blockLocalEmoji",
 ];
 
@@ -179,6 +181,7 @@ export function publicGuestConfig(settings) {
       emoji: settings.blockEmoji,
       soundboard: settings.blockSoundboard,
       servers: settings.blockServers,
+      bots: settings.blockBots,
       localEmoji: settings.blockLocalEmoji,
     },
   };
