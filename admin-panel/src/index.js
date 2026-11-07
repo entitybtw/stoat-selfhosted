@@ -33,7 +33,7 @@ import {
   removeGuest,
   runGuestCleanup,
 } from "./routes/guest.js";
-import { expireGuests } from "./guest.js";
+import { expireGuests, ensureGuestSettingsDocument } from "./guest.js";
 import {
   getServer,
   searchServerMembers,
@@ -151,6 +151,15 @@ app.use((err, req, res, next) => {
 });
 
 await connectDb();
+
+// The backend reads the guest settings from the same collection, so the
+// document has to exist and name the reserved domain before the first
+// request is answered.
+try {
+  await ensureGuestSettingsDocument();
+} catch (error) {
+  console.error("[guest] could not prepare the settings document:", error);
+}
 
 // Expired guests are removed once an hour; the backend's own cleaner then
 // wipes the account itself.

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 import { col } from "./db.js";
+import { GUEST_EMAIL_DOMAIN, isGuestEmail } from "./guestEmail.js";
 import { config } from "./config.js";
 import { displayNameError } from "./validate.js";
 
@@ -18,8 +19,7 @@ const SETTINGS_COLLECTION = "admin_guest_settings";
 export const ACCOUNTS_COLLECTION = "admin_guest_accounts";
 
 /** Email domain that marks an account as temporary */
-export const GUEST_EMAIL_DOMAIN =
-  process.env.GUEST_EMAIL_DOMAIN || "guest.entitybtw.ru";
+export { GUEST_EMAIL_DOMAIN, isGuestEmail } from "./guestEmail.js";
 
 /** Defaults used until an admin changes something */
 export const DEFAULT_SETTINGS = {
@@ -88,6 +88,11 @@ export async function saveGuestSettings(patch) {
     if (typeof patch[key] === "boolean") $set[key] = patch[key];
   }
 
+  // The backend reads the reserved domain from the same document, so it has
+  // to be written down: an account is only a guest while its email lives
+  // there.
+  $set.guestEmailDomain = GUEST_EMAIL_DOMAIN;
+
   if (patch.lifetimeDays !== undefined) {
     const days = Math.round(Number(patch.lifetimeDays));
     if (!Number.isFinite(days) || days < 1 || days > 3650) {
@@ -140,6 +145,26 @@ export async function saveGuestSettings(patch) {
 
 async function getSettingsAndAccounts() {
   return getGuestSettings();
+}
+
+/**
+ * Make sure the settings document exists and names the reserved domain.
+ *
+ * The backend reads the domain from this document, so an instance that has
+ * never had its settings saved would otherwise fall back to the domain in the
+ * configuration file. Writing the document at startup keeps the two in step
+ * from the first request on.
+ */
+export async function ensureGuestSettingsDocument() {
+  const stored = await col(SETTINGS_COLLECTION).findOne({ _id: SETTINGS_ID });
+
+  if (stored && stored.guestEmailDomain === GUEST_EMAIL_DOMAIN) return;
+
+  await col(SETTINGS_COLLECTION).updateOne(
+    { _id: SETTINGS_ID },
+    { $set: { guestEmailDomain: GUEST_EMAIL_DOMAIN, updatedAt: new Date() } },
+    { upsert: true },
+  );
 }
 
 /** Payload the web client is allowed to see */
@@ -350,7 +375,7 @@ export async function guestStatus(token) {
   const account = await col("accounts").findOne({ _id: userId });
   const email = account?.email ?? "";
 
-  const isGuest = email.startsWith("guest-") && email.endsWith(`@${GUEST_EMAIL_DOMAIN}`);
+  const isGuest = isGuestEmail(email);
 
   if (record && !isGuest && !record.convertedAt) {
     await col(ACCOUNTS_COLLECTION).updateOne(
@@ -455,7 +480,7 @@ export async function expireGuests() {
     }
 
     const email = account.email ?? "";
-    const isGuest = email.startsWith("guest-") && email.endsWith(`@${GUEST_EMAIL_DOMAIN}`);
+    const isGuest = isGuestEmail(email);
 
     if (!isGuest) {
       converted += 1;

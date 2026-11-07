@@ -2,11 +2,12 @@
   "name": "stoat-admin",
   "version": "0.0.9",
   "private": true,
-  "description": "Stoat admin panel — standalone user/server management UI",
+  "description": "Stoat admin panel \u2014 standalone user/server management UI",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.1",

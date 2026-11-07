@@ -233,6 +233,26 @@ do and hides those controls: sending files and media, avatar and banner,
 server emoji, soundboard uploads, local emoji packs and creating servers. The
 soundboard itself keeps working — guests may play sounds, just not add any.
 
+The restrictions are enforced by the backend as well, not only by the client.
+An account whose email lives in the reserved domain is a guest for the API and
+for the file server, so a client that ignores the hidden buttons is still
+refused: the answer is `403` with the error `GuestNotAllowed`. The backend
+reads the same settings the panel writes (`admin_guest_settings`), so the two
+cannot drift apart; the `guests` section of the configuration file is the
+fallback for an instance without a panel.
+
+| Action                        | Where it is refused                                    |
+| ----------------------------- | ------------------------------------------------------ |
+| sending a file in a message   | `POST /channels/<id>/messages`, and the file server    |
+| uploading any file            | the file server (`autumn`), by the kind of upload      |
+| setting an avatar             | `PATCH /users/@me`                                     |
+| creating custom emoji         | `PUT /custom/emoji/<id>`                              |
+| publishing to the soundboard  | `PATCH /servers/<id>`, and the file server            |
+| creating a server             | `POST /servers/create`                                 |
+
+Local emoji never leave the device, so there is nothing on the server to
+refuse: that one restriction can only be the client's.
+
 On the first visit a dialog offers to turn the account into a real one: the
 email and password are changed through the normal account endpoints and the
 suffix is dropped. The generated password is kept in the browser's
